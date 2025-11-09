@@ -1,0 +1,142 @@
+[
+  {
+    "name": "🥐 Croissant",
+    "description": "Flaky, buttery, Paris-level smug.",
+    "price": 2.5,
+    "currency": "EUR",
+    "image_url": "https://picsum.photos/seed/croissant/200/200"
+  },
+  {
+    "name": "☕ Coffee",
+    "description": "Liquid sanity.",
+    "price": 1.2,
+    "currency": "EUR",
+    "image_url": "https://picsum.photos/seed/coffee/200/200"
+  },
+  {
+    "name": "🥯 Bagel",
+    "description": "Bread with commitment issues.",
+    "price": 1.8,
+    "currency": "EUR",
+    "image_url": "https://picsum.photos/seed/bagel/200/200"
+  },
+  {
+    "name": "🍵 Tea",
+    "description": "Elegant leaf juice.",
+    "price": 1.0,
+    "currency": "EUR",
+    "image_url": "https://picsum.photos/seed/tea/200/200"
+  },
+  {
+    "name": "🍰 Chocolate Cake",
+    "description": "Mood booster + sugar tax combo.",
+    "price": 3.6,
+    "currency": "EUR",
+    "image_url": "https://picsum.photos/seed/cake/200/200"
+  },
+  {
+    "name": "🥪 Sandwich",
+    "description": "Bread. Stuff. Bread again.",
+    "price": 4.5,
+    "currency": "EUR",
+    "image_url": "https://picsum.photos/seed/sandwich/200/200"
+  },
+  {
+    "name": "🍊 Orange Juice",
+    "description": "Sunshine in a cup.",
+    "price": 2.0,
+    "currency": "EUR",
+    "image_url": "https://picsum.photos/seed/oj/200/200"
+  },
+  {
+    "name": "⚡ Espresso",
+    "description": "One shot, straight to the brain.",
+    "price": 1.4,
+    "currency": "EUR",
+    "image_url": "https://picsum.photos/seed/espresso/200/200"
+  },
+  {
+    "name": "🥛 Latte",
+    "description": "Coffee's introverted cousin.",
+    "price": 2.8,
+    "currency": "EUR",
+    "image_url": "https://picsum.photos/seed/latte/200/200"
+  },
+  {
+    "name": "💧 Americano",
+    "description": "Watered-down ambition.",
+    "price": 2.0,
+    "currency": "EUR",
+    "image_url": "https://picsum.photos/seed/americano/200/200"
+  },
+  {
+    "name": "🫧 Cappuccino",
+    "description": "Caffeine under a foam hat.",
+    "price": 2.6,
+    "currency": "EUR",
+    "image_url": "https://picsum.photos/seed/cappuccino/200/200"
+  },
+  {
+    "name": "🍫 Hot Chocolate",
+    "description": "Warm hug for the soul.",
+    "price": 2.7,
+    "currency": "EUR",
+    "image_url": "https://picsum.photos/seed/hotchoc/200/200"
+  },
+  {
+    "name": "🧁 Muffin",
+    "description": "Cupcake without the costume.",
+    "price": 1.9,
+    "currency": "EUR",
+    "image_url": "https://picsum.photos/seed/muffin/200/200"
+  },
+  {
+    "name": "🍩 Donut",
+    "description": "Fried joy wheel.",
+    "price": 1.7,
+    "currency": "EUR",
+    "image_url": "https://picsum.photos/seed/donut/200/200"
+  },
+  {
+    "name": "💧 Water",
+    "description": "Aquatic substance. Surprisingly relevant for survival.",
+    "price": 0.9,
+    "currency": "EUR",
+    "image_url": "https://picsum.photos/seed/water/200/200"
+  },
+  {
+    "name": "🧊 Iced Coffee",
+    "description": "Cold brew for emotionally distant people.",
+    "price": 2.3,
+    "currency": "EUR",
+    "image_url": "https://picsum.photos/seed/icedcoffee/200/200"
+  },
+  {
+    "name": "🍓 Fruit Salad",
+    "description": "Virtue bowl.",
+    "price": 3.2,
+    "currency": "EUR",
+    "image_url": "https://picsum.photos/seed/fruitsalad/200/200"
+  },
+  {
+    "name": "🍮 Cheesecake",
+    "description": "Soft, sweet, existential.",
+    "price": 3.9,
+    "currency": "EUR",
+    "image_url": "https://picsum.photos/seed/cheesecake/200/200"
+  },
+  {
+    "name": "🥑 Avocado Toast",
+    "description": "Millennial luxury item.",
+    "price": 5.2,
+    "currency": "EUR",
+    "image_url": "https://picsum.photos/seed/avocado/200/200"
+  },
+  {
+    "name": "🏋️ Energy Bar",
+    "description": "Pretends to be healthy. Actually candy.",
+    "price": 1.5,
+    "currency": "EUR",
+    "image_url": "https://picsum.photos/seed/energy/200/200"
+  }
+]
