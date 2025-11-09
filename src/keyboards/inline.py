@@ -9,3 +9,9 @@ def catalog_keyboard(products: list[ProductItem], cursor_id: int | None = None) 
   if cursor_id is not None:
     kb.add(InlineKeyboardButton(text="Next ▶️", callback_data=f"catalog_cursor_{cursor_id}"))
   return kb
+
+
+def buy_product_keyboard(product_id: int) -> InlineKeyboardMarkup:
+  kb = InlineKeyboardMarkup()
+  kb.add(InlineKeyboardButton(text="Buy 🛒", callback_data=f"buy_product_{product_id}"))
+  return kb

@@ -11,6 +11,7 @@ class GetProductsListParams:
 class ProductItem:
   id: int
   name: str
+  image_url: str | None
   description: str
   price: float
   currency: str
@@ -21,9 +22,10 @@ def from_db_row_to_product_item(row) -> ProductItem:
     id=row[0],
     name=row[1],
     description=row[2],
-    price=row[3],
-    currency=row[4],
-    created_at=row[5]
+    image_url=row[3],
+    price=row[4],
+    currency=row[5],
+    created_at=row[6]
   )
 
 class ProductService:
@@ -31,6 +33,19 @@ class ProductService:
   
   def __init__(self, db_connection: Connection):
     self.db_connection = db_connection
+
+  def get_products_count(self) -> int:
+    cursor_obj = self.db_connection.cursor()
+    query = '''
+      SELECT
+        COUNT(*)
+      FROM products p
+      LEFT JOIN orders o ON o.product_id = p.id
+      WHERE o.id IS NULL OR o.status = 'cancelled';
+    '''
+    cursor_obj.execute(query)
+    count = cursor_obj.fetchone()[0]
+    return count
   
   # Accept arguments like limit, cursor for pagination and sort direction
   def get_products_list(self, params: GetProductsListParams):
@@ -53,3 +68,17 @@ class ProductService:
       fetch_next_cursor = products_raws[params.limit][0]  # id of the last item in the current page
 
     return list(products), fetch_next_cursor
+
+  def get_product_by_id(self, product_id: int) -> ProductItem | None:
+    cursor_obj = self.db_connection.cursor()
+    query = '''
+      SELECT p.* FROM products p
+      LEFT JOIN orders o ON p.id = o.product_id
+      WHERE p.id = ? AND (o.id IS NULL OR o.status = 'canceled')
+    '''
+    cursor_obj.execute(query, (product_id,))
+    row = cursor_obj.fetchone()
+    if row is None:
+      return None
+    return from_db_row_to_product_item(row)
+  

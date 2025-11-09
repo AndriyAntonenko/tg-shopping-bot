@@ -11,7 +11,7 @@ class Settings:
   skip_pending: bool = True
   long_polling_timeout: int = 20
   database_path: str = os.getenv("DATABASE_PATH", "")
-  initial_products_json: str = os.getenv("INITIAL_PRODUCTS_JSON", "")
+  initial_products_json: str = os.getenv("INITIAL_PRODUCTS_JSON", None)
 
 settings = Settings()
 
@@ -20,6 +20,3 @@ if not settings.bot_token:
 
 if not settings.database_path:
   raise RuntimeError("DATABASE_PATH is not set in environment variables.")
-
-if not settings.initial_products_json:
-  raise RuntimeError("INITIAL_PRODUCTS_JSON is not set in environment variables.")

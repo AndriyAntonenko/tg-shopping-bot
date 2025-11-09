@@ -1,6 +1,7 @@
 from sqlite3 import Connection
 from ..config import settings
 from .connection import get_db_connection
+import logging
 
 def apply_migrations():
   db_connection: Connection = get_db_connection()
@@ -11,6 +12,7 @@ def apply_migrations():
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
       description TEXT,
+      image_url TEXT,
       price REAL NOT NULL,
       currency TEXT NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -28,25 +30,27 @@ def apply_migrations():
     )
   ''')
 
-  try:
-    with open(settings.initial_products_json, "r", encoding="utf-8") as f:
-      import json
-      products = json.load(f)
-      for product in products:
-        cursor.execute(
-            '''
-            INSERT INTO products (name, description, price, currency)
-            VALUES (?, ?, ?, ?)
-            ''',
-            (
-                product.get("name"),
-                product.get("description"),
-                product.get("price"),
-                product.get("currency")
-            )
-        )
-  except FileNotFoundError:
-    raise RuntimeError(f"Initial products JSON file not found at {settings.initial_products_json}")
+  if settings.initial_products_json:
+    try:
+      with open(settings.initial_products_json, "r", encoding="utf-8") as f:
+        import json
+        products = json.load(f)
+        for product in products:
+          cursor.execute(
+              '''
+              INSERT INTO products (name, description, image_url, price, currency)
+              VALUES (?, ?, ?, ?, ?)
+              ''',
+              (
+                  product.get("name"),
+                  product.get("description"),
+                  product.get("image_url"),
+                  product.get("price"),
+                  product.get("currency")
+              )
+          )
+    except FileNotFoundError:
+      logging.getLogger(__name__).warning(f"Initial products JSON file not found at {settings.initial_products_json}. Skipping initial data load.")
 
   db_connection.commit()
   
