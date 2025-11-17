@@ -26,9 +26,22 @@ def apply_migrations():
       user_id INTEGER NOT NULL,
       status TEXT NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (product_id) REFERENCES products(id)
+      FOREIGN KEY (product_id) REFERENCES products(id),
+      FOREIGN KEY (user_id) REFERENCES users(id)
     )
   ''')
+
+  cursor.execute(
+    '''
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      telegram_user_id INTEGER NOT NULL UNIQUE,
+      telegram_username TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      is_admin BOOLEAN DEFAULT FALSE
+    )
+    '''
+  )
 
   if settings.initial_products_json:
     try:

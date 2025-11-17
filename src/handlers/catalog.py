@@ -3,6 +3,8 @@ from ..loader import bot
 from ..keyboards.inline import catalog_keyboard, buy_product_keyboard
 from ..db.connection import get_db_connection
 from ..services.products import ProductService, GetProductsListParams
+from ..services.orders import OrdersService
+from ..services.users import UsersService
 
 
 def send_catalog(message: Message, user_cursor: int = 0):
@@ -64,3 +66,38 @@ Price: {product.price} {product.currency}
     
     print(product)
     bot.send_photo(call.message.chat.id, product.image_url, caption=msg, reply_markup=buy_product_keyboard(product.id))
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("buy_product_"))
+def handle_buy_product(call):
+    product_id_str = call.data.removeprefix("buy_product_")
+    if not product_id_str.isdigit():
+        bot.answer_callback_query(call.id, "Invalid product ID.")
+        return
+
+    product_id = int(product_id_str)
+    
+    orders_service = OrdersService()
+    users_service = UsersService()
+
+    username = call.from_user.username
+    if username is None:
+        bot.answer_callback_query(call.id, f"Only users without username can place orders.")
+        return
+    
+    user = users_service.get_or_create_user(
+        call.from_user.id,
+        call.from_user.username
+    )
+
+    order = orders_service.create_order(product_id, user.id)
+
+    msg = f'''Order Created Successfully! 🎉\n
+Order ID: {order.id}
+Status: {order.status}
+Thank you for your purchase! 🛒
+
+Our administrator will contact you soon to finalize the details.
+'''
+    
+    bot.send_message(call.message.chat.id, msg)

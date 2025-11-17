@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from sqlite3 import Connection
+from .orders import OrderStatus
 
 @dataclass
 class GetProductsListParams:
@@ -41,9 +42,9 @@ class ProductService:
         COUNT(*)
       FROM products p
       LEFT JOIN orders o ON o.product_id = p.id
-      WHERE o.id IS NULL OR o.status = 'cancelled';
+      WHERE o.id IS NULL OR o.status = ?;
     '''
-    cursor_obj.execute(query)
+    cursor_obj.execute(query, (OrderStatus.CANCELED.value,))
     count = cursor_obj.fetchone()[0]
     return count
   
@@ -51,7 +52,7 @@ class ProductService:
   def get_products_list(self, params: GetProductsListParams):
     cursor_obj = self.db_connection.cursor()
     order = "DESC" if params.sort_desc else "ASC"
-    condition = '''(o.id IS NULL OR o.status = 'cancelled') AND p.id <= ?''' if params.cursor > 0 else "(o.id IS NULL OR o.status = 'cancelled')"
+    condition = '''p.id <= ? AND (o.id IS NULL OR o.status = ?)''' if params.cursor > 0 else "(o.id IS NULL OR o.status = ?)"
     query = f'''
       SELECT p.* FROM products p
       LEFT JOIN orders o ON p.id = o.product_id
@@ -59,7 +60,7 @@ class ProductService:
       ORDER BY p.id {order}
       LIMIT ?;
     '''
-    args = (params.cursor, params.limit + 1) if params.cursor > 0 else (params.limit + 1,)
+    args = (params.cursor, OrderStatus.CANCELED.value, params.limit + 1) if params.cursor > 0 else (OrderStatus.CANCELED.value, params.limit + 1,)
     cursor_obj.execute(query, args) # Fetch one extra to check for more pages
     products_raws = cursor_obj.fetchall()
     products = map(from_db_row_to_product_item, products_raws[:params.limit])  # Return only the requested limit
