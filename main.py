@@ -1,10 +1,12 @@
 import logging
 import sys
+import asyncio
 from telebot.types import BotCommand
 from src.utils.logging import setup_logging
 from src.config import settings
 from src.loader import bot
 from src.db.migrations import apply_migrations
+from src.constants import CATALOG_CMD, START_CMD, ADMIN_CMD, HELP_CMD
 
 import src.handlers
 
@@ -14,28 +16,28 @@ if sys.version_info < (3, 12):
     raise RuntimeError(error_message)
 
 
-def register_commands():
+async def register_commands():
     commands = [
-        BotCommand(command="start", description="Start interaction with the bot"),
-        BotCommand(command="help", description="Get help information"),
-        BotCommand(command="catalog", description="Browse the product catalog"),
+        BotCommand(command=START_CMD, description="Start interaction with the bot"),
+        BotCommand(command=HELP_CMD, description="Get help information"),
+        BotCommand(command=CATALOG_CMD, description="Browse the product catalog"),
+        BotCommand(command=ADMIN_CMD, description="Browse the product catalog"),
     ]
-    bot.set_my_commands(commands)
+    await bot.set_my_commands(commands)
 
 
-def main():
-    apply_migrations()
+async def main():
+    await apply_migrations()
 
     setup_logging()
-    register_commands()
+    await register_commands()
     logging.getLogger(__name__).info("Bot starting with long polling...")
-    bot.infinity_polling(
+    await bot.infinity_polling(
         skip_pending=settings.skip_pending,
         timeout=settings.long_polling_timeout,
-        long_polling_timeout=settings.long_polling_timeout,
         allowed_updates=["message", "callback_query"]
     )
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

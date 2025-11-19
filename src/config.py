@@ -11,6 +11,8 @@ class Settings:
   skip_pending: bool = True
   long_polling_timeout: int = 20
   database_path: str = os.getenv("DATABASE_PATH", "")
+  administrator_id: int = int(os.getenv("ADMINISTRATOR_ID", "0"))
+  administrator_username: str = os.getenv("ADMINISTRATOR_USERNAME", "")
   initial_products_json: str = os.getenv("INITIAL_PRODUCTS_JSON", None)
 
 settings = Settings()
@@ -20,3 +22,9 @@ if not settings.bot_token:
 
 if not settings.database_path:
   raise RuntimeError("DATABASE_PATH is not set in environment variables.")
+
+if settings.administrator_id == 0:
+  raise RuntimeError("ADMINISTRATOR_ID is not set in environment variables.")
+
+if settings.administrator_username == "":
+  raise RuntimeError("ADMINISTRATOR_USERNAME is not set in environment variables.")

@@ -19,15 +19,34 @@ def from_db_row_to_user(row) -> User:
   )
 
 class UsersService:
-  def get_or_create_user(
+  async def get_user_if_exists(self, telegram_user_id) -> User | None:
+    conn = await get_db_connection()
+    cursor = await conn.cursor()
+
+    await cursor.execute(
+      '''
+      SELECT id, telegram_user_id, telegram_username, created_at, is_admin
+      FROM users
+      WHERE telegram_user_id = ?;
+      ''',
+      (telegram_user_id,)
+    )
+
+    user_row = await cursor.fetchone()
+    if user_row is None:
+      return None
+
+    return from_db_row_to_user(user_row)
+
+  async def get_or_create_user(
     self,
     telegram_user_id,
     telegram_username: str
   ) -> User:
-    conn = get_db_connection()
-    cursor = conn.cursor()
+    conn = await get_db_connection()
+    cursor = await conn.cursor()
 
-    cursor.execute(
+    await cursor.execute(
       '''
       INSERT INTO users (telegram_user_id, telegram_username)
       VALUES (?, ?)
@@ -37,8 +56,8 @@ class UsersService:
       (telegram_user_id, telegram_username)
     )
 
-    user_row = cursor.fetchone()
-    conn.commit()
+    user_row = await cursor.fetchone()
+    await conn.commit()
 
     return from_db_row_to_user(user_row)
 

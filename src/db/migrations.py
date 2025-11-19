@@ -1,13 +1,13 @@
-from sqlite3 import Connection
+from aiosqlite import Connection
 from ..config import settings
 from .connection import get_db_connection
 import logging
 
-def apply_migrations():
-  db_connection: Connection = get_db_connection()
-  cursor = db_connection.cursor()
+async def apply_migrations():
+  db_connection: Connection = await get_db_connection()
+  cursor = await db_connection.cursor()
 
-  cursor.execute('''
+  await cursor.execute('''
     CREATE TABLE IF NOT EXISTS products (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
@@ -19,7 +19,7 @@ def apply_migrations():
     )
   ''')
 
-  cursor.execute('''
+  await cursor.execute('''
     CREATE TABLE IF NOT EXISTS orders (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       product_id INTEGER NOT NULL,
@@ -31,7 +31,7 @@ def apply_migrations():
     )
   ''')
 
-  cursor.execute(
+  await cursor.execute(
     '''
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -43,13 +43,23 @@ def apply_migrations():
     '''
   )
 
+  if settings.administrator_id and settings.administrator_username:
+    await cursor.execute(
+      '''
+      INSERT INTO users(telegram_user_id, telegram_username, is_admin)
+      VALUES (?, ?, TRUE)
+      ON CONFLICT DO UPDATE SET is_admin=TRUE;
+      ''',
+      (settings.administrator_id, settings.administrator_username)
+    )
+
   if settings.initial_products_json:
     try:
       with open(settings.initial_products_json, "r", encoding="utf-8") as f:
         import json
         products = json.load(f)
         for product in products:
-          cursor.execute(
+          await cursor.execute(
               '''
               INSERT INTO products (name, description, image_url, price, currency)
               VALUES (?, ?, ?, ?, ?)
@@ -65,5 +75,5 @@ def apply_migrations():
     except FileNotFoundError:
       logging.getLogger(__name__).warning(f"Initial products JSON file not found at {settings.initial_products_json}. Skipping initial data load.")
 
-  db_connection.commit()
+  await db_connection.commit()
   
