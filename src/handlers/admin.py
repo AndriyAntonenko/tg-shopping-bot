@@ -4,7 +4,7 @@ from ..loader import bot
 from ..services.users import UsersService, User
 from ..keyboards.inline import admin_keyboard, pending_orders_keyboard, admin_order_commands_keyboard
 from ..services.orders import OrdersService, OrderStatus
-from ..constants import VIEW_PENDING_ORDERS_CQ, VIEW_ORDER_DETAILS_CQ_PREFIX, ADMIN_CMD, APPROVE_ORDER_CQ_PREFIX, CANCEL_ORDER_CQ_PREFIX
+from ..constants import VIEW_PENDING_ORDERS_CQ, VIEW_ORDER_DETAILS_CQ_PREFIX, ADMIN_CMD, APPROVE_ORDER_CQ_PREFIX, CANCEL_ORDER_CQ_PREFIX, VIEW_ALL_ORDERS_CMD
 from ..guards.admin import admin_guard
 
 @bot.message_handler(commands=[ADMIN_CMD])
@@ -13,6 +13,18 @@ async def cmd_admin(message: Message):
   await bot.send_message(message.chat.id, '''Hello @{username}!
 Welcome to the admin panel. Use the buttons below to manage pending orders.'''.format(username=message.from_user.username),
                    reply_markup=admin_keyboard())
+
+@bot.message_handler(commands=[VIEW_ALL_ORDERS_CMD])
+@admin_guard
+async def cmd_view_all_orders(message: Message):
+  orders_service = OrdersService()
+  pending_orders_count = await orders_service.get_pending_orders_count()
+  if pending_orders_count == 0:
+    await bot.answer_callback_query(message.id, "There are no pending orders at the moment.")
+
+  pending_orders = await orders_service.get_pending_orders_list(None)
+  msg = "You have {count} pending orders.\n\nClick the button below to check order details".format(count=pending_orders_count)
+  await bot.send_message(message.message.chat.id, msg, reply_markup=pending_orders_keyboard(pending_orders))
 
 
 @bot.callback_query_handler(func=lambda call: call.data == VIEW_PENDING_ORDERS_CQ)
@@ -26,7 +38,7 @@ async def handle_view_pending_orders(call):
   pending_orders = await orders_service.get_pending_orders_list(None)
   msg = "You have {count} pending orders.\n\nClick the button below to check order details".format(count=pending_orders_count)
   await bot.send_message(call.message.chat.id, msg, reply_markup=pending_orders_keyboard(pending_orders))
-  
+
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith(VIEW_ORDER_DETAILS_CQ_PREFIX))
 @admin_guard

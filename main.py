@@ -6,7 +6,7 @@ from src.utils.logging import setup_logging
 from src.config import settings
 from src.loader import bot
 from src.db.migrations import apply_migrations
-from src.constants import CATALOG_CMD, START_CMD, ADMIN_CMD, HELP_CMD
+from src.constants import CATALOG_CMD, START_CMD, ADMIN_CMD, HELP_CMD, VIEW_ALL_ORDERS_CMD, ADD_PRODUCT_CMD, REMOVE_PRODUCT_CMD
 
 import src.handlers
 
@@ -22,6 +22,9 @@ async def register_commands():
         BotCommand(command=HELP_CMD, description="Get help information"),
         BotCommand(command=CATALOG_CMD, description="Browse the product catalog"),
         BotCommand(command=ADMIN_CMD, description="Browse the product catalog"),
+        BotCommand(command=VIEW_ALL_ORDERS_CMD, description="View all pending orders"),
+        BotCommand(command=ADD_PRODUCT_CMD, description="Add a new product to the catalog"),
+        BotCommand(command=REMOVE_PRODUCT_CMD, description="Remove a product from the catalog"),
     ]
     await bot.set_my_commands(commands)
 

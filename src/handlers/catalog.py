@@ -65,7 +65,6 @@ Description: {product.description or "No description available."}
 Price: {product.price} {product.currency}
 '''
     
-    print(product)
     await bot.send_photo(call.message.chat.id, product.image_url, caption=msg, reply_markup=buy_product_keyboard(product.id))
 
 

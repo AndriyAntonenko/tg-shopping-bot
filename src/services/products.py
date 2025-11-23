@@ -80,4 +80,21 @@ class ProductService:
     if row is None:
       return None
     return from_db_row_to_product_item(row)
-  
+
+  async def add_product(
+    self,
+    name: str,
+    description: str,
+    image_url: str,
+    price: float,
+    currency: str
+  ):
+    conn = await get_db_connection()
+    cursor_obj = await conn.cursor()
+    query = '''
+      INSERT INTO products (name, description, image_url, price, currency)
+      VALUES (?, ?, ?, ?, ?);
+    '''
+    await cursor_obj.execute(query, (name, description, image_url, price, currency))
+    await conn.commit()
+    return cursor_obj.lastrowid

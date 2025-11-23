@@ -12,6 +12,11 @@ CATALOG_CMD = "catalog"
 START_CMD = "start"
 ADMIN_CMD = "admin"
 HELP_CMD = "help"
+VIEW_ALL_ORDERS_CMD = "orders"
+ADD_PRODUCT_CMD = "add_item"
+REMOVE_PRODUCT_CMD = "remove_item"
 
 BROWSE_CATALOG_MESSAGE = "Browse Catalog"
 HELP_MESSAGE = "Help"
+
+DEFAULT_CURRENCY = "EUR"
