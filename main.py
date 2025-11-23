@@ -1,18 +1,28 @@
+import asyncio
 import logging
 import sys
-import asyncio
-from telebot.types import BotCommand
-from src.utils.logging import setup_logging
-from src.config import settings
-from src.loader import bot
-from src.db.migrations import apply_migrations
-from src.constants import CATALOG_CMD, START_CMD, ADMIN_CMD, HELP_CMD, VIEW_ALL_ORDERS_CMD, ADD_PRODUCT_CMD, REMOVE_PRODUCT_CMD
 
-import src.handlers
+from telebot.types import BotCommand
+
+from src.config import settings
+from src.constants import (
+    ADD_PRODUCT_CMD,
+    ADMIN_CMD,
+    CATALOG_CMD,
+    HELP_CMD,
+    REMOVE_PRODUCT_CMD,
+    START_CMD,
+    VIEW_ALL_ORDERS_CMD,
+)
+from src.db.migrations import apply_migrations
+from src.loader import bot
+from src.utils.logging import setup_logging
 
 if sys.version_info < (3, 12):
     current_version = ".".join(map(str, sys.version_info[:3]))
-    error_message = "This project requires Python 3.12.0 or higher. You are using Python {current_version}".format(current_version=current_version)
+    error_message = "This project requires Python 3.12.0 or higher. You are using Python {current_version}".format(
+        current_version=current_version
+    )
     raise RuntimeError(error_message)
 
 
@@ -23,8 +33,12 @@ async def register_commands():
         BotCommand(command=CATALOG_CMD, description="Browse the product catalog"),
         BotCommand(command=ADMIN_CMD, description="Browse the product catalog"),
         BotCommand(command=VIEW_ALL_ORDERS_CMD, description="View all pending orders"),
-        BotCommand(command=ADD_PRODUCT_CMD, description="Add a new product to the catalog"),
-        BotCommand(command=REMOVE_PRODUCT_CMD, description="Remove a product from the catalog"),
+        BotCommand(
+            command=ADD_PRODUCT_CMD, description="Add a new product to the catalog"
+        ),
+        BotCommand(
+            command=REMOVE_PRODUCT_CMD, description="Remove a product from the catalog"
+        ),
     ]
     await bot.set_my_commands(commands)
 
@@ -38,7 +52,7 @@ async def main():
     await bot.infinity_polling(
         skip_pending=settings.skip_pending,
         timeout=settings.long_polling_timeout,
-        allowed_updates=["message", "callback_query"]
+        allowed_updates=["message", "callback_query"],
     )
 
 

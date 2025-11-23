@@ -11,4 +11,20 @@ dependencies = [
     "pytelegrambotapi>=4.29.1",
     "python-dotenv>=1.2.1",
     "aioboto3>=15.5.0",
+    "ruff>=0.1.0",
 ]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = []
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+

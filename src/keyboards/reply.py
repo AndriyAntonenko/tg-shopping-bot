@@ -1,5 +1,7 @@
-from telebot.types import ReplyKeyboardMarkup, KeyboardButton
+from telebot.types import KeyboardButton, ReplyKeyboardMarkup
+
 from ..constants import BROWSE_CATALOG_MESSAGE, HELP_MESSAGE
+
 
 def main_menu():
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
