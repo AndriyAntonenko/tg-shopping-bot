@@ -52,6 +52,7 @@ async def handle_browse_catalog(message: Message):
 async def handle_catalog_pagination(call):
     cursor_str = call.data.removeprefix(NEXT_CATALOG_CQ_PREFIX)
     cursor = int(cursor_str) if cursor_str.isdigit() else 0
+    await bot.delete_message(call.message.chat.id, call.message.message_id)
     await send_catalog(call.message, cursor)
 
 

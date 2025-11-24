@@ -32,3 +32,12 @@ class StorageService:
         except ClientError as e:
             print(f"Error uploading file: {e}")
             return None
+
+    async def delete_file(self, file_name):
+        try:
+            async with self.session.client("s3", **self.config) as client:
+                await client.delete_object(Bucket=self.bucket, Key=file_name)
+            return True
+        except ClientError as e:
+            print(f"Error deleting file: {e}")
+            return False

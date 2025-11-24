@@ -8,6 +8,11 @@ NEXT_CATALOG_CQ_PREFIX = "catalog_cursor_"
 PRODUCT_DETAILS_CQ_PREFIX = "product_"
 BUY_PRODUCT_CQ_PREFIX = "buy_product_"
 
+REMOVE_PRODUCT_PREFIX = "remove_product_"
+CONFIRM_REMOVE_PRODUCT_PREFIX = "confirm_remove_product_"
+CANCEL_REMOVE_PRODUCT_PREFIX = "cancel_remove_product_"
+REMOVE_PRODUCT_CURSOR_PREFIX = "remove_product_cursor"
+
 CATALOG_CMD = "catalog"
 START_CMD = "start"
 ADMIN_CMD = "admin"

@@ -8,6 +8,11 @@ from ..constants import (
     PRODUCT_DETAILS_CQ_PREFIX,
     VIEW_ORDER_DETAILS_CQ_PREFIX,
     VIEW_PENDING_ORDERS_CQ,
+
+    REMOVE_PRODUCT_PREFIX,
+    CONFIRM_REMOVE_PRODUCT_PREFIX,
+    CANCEL_REMOVE_PRODUCT_PREFIX,
+    REMOVE_PRODUCT_CURSOR_PREFIX,
 )
 from ..services.orders import OrderItemDetailed
 from ..services.products import ProductItem
@@ -78,3 +83,36 @@ def admin_order_commands_keyboard(order_id: int) -> InlineKeyboardMarkup:
         ),
     )
     return kb
+
+def admin_remove_products_keyboard(products: list[ProductItem], next_cursor: int | None = None) -> InlineKeyboardMarkup:
+    markup = InlineKeyboardMarkup(row_width=2)
+    markup.add(
+        *[
+            InlineKeyboardButton(
+                text=f"{product.name} ({product.price} {product.currency})",
+                callback_data=f"{REMOVE_PRODUCT_PREFIX}{product.id}",
+            )
+            for product in products
+        ]
+    )
+
+    if next_cursor:
+        markup.add(
+            InlineKeyboardButton(
+                text="Next Page >>", callback_data=f"{REMOVE_PRODUCT_CURSOR_PREFIX}{next_cursor}"
+            )
+        )
+    return markup
+
+
+def confirm_remove_product_keyboard(product_id: int) -> InlineKeyboardMarkup:
+    markup = InlineKeyboardMarkup()
+    markup.add(
+        InlineKeyboardButton(
+            text="Yes, Remove", callback_data=f"{CONFIRM_REMOVE_PRODUCT_PREFIX}{product_id}"
+        ),
+        InlineKeyboardButton(
+            text="No, Cancel", callback_data=f"{CANCEL_REMOVE_PRODUCT_PREFIX}"
+        ),
+    )
+    return markup

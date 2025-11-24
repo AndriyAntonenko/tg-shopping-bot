@@ -113,3 +113,10 @@ class ProductService:
         await cursor_obj.execute(query, (name, description, image_url, price, currency))
         await conn.commit()
         return cursor_obj.lastrowid
+
+    async def delete_product(self, product_id: int):
+        conn = await get_db_connection()
+        cursor_obj = await conn.cursor()
+        query = "DELETE FROM products WHERE id = ?"
+        await cursor_obj.execute(query, (product_id,))
+        await conn.commit()

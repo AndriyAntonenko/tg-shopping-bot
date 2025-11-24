@@ -7,15 +7,24 @@ from ..constants import (
     VIEW_ALL_ORDERS_CMD,
     VIEW_ORDER_DETAILS_CQ_PREFIX,
     VIEW_PENDING_ORDERS_CQ,
+    REMOVE_PRODUCT_PREFIX,
+    REMOVE_PRODUCT_CMD,
+    CONFIRM_REMOVE_PRODUCT_PREFIX,
+    CANCEL_REMOVE_PRODUCT_PREFIX,
+    REMOVE_PRODUCT_CURSOR_PREFIX
 )
 from ..guards.admin import admin_guard
 from ..keyboards.inline import (
     admin_keyboard,
     admin_order_commands_keyboard,
     pending_orders_keyboard,
+    admin_remove_products_keyboard,
+    confirm_remove_product_keyboard
 )
 from ..loader import bot
 from ..services.orders import OrdersService, OrderStatus
+from ..services.products import GetProductsListParams, ProductService
+from ..services.storage import StorageService
 
 
 @bot.message_handler(commands=[ADMIN_CMD])
@@ -46,7 +55,7 @@ async def cmd_view_all_orders(message: Message):
         count=pending_orders_count
     )
     await bot.send_message(
-        message.message.chat.id,
+        message.chat.id,
         msg,
         reply_markup=pending_orders_keyboard(pending_orders),
     )
@@ -153,3 +162,132 @@ async def handle_cancel_order(call):
         f"Order #{order_id} has been marked as canceled.",
         reply_markup=admin_keyboard(),
     )
+
+
+@bot.message_handler(commands=[REMOVE_PRODUCT_CMD])
+@admin_guard
+async def cmd_remove_product(message):
+    await show_products_to_remove(message.chat.id, 0)
+
+
+async def show_products_to_remove(chat_id, cursor):
+    product_service = ProductService()
+    params = GetProductsListParams(limit=6, cursor=cursor, sort_desc=True)
+    products, next_cursor = await product_service.get_products_list(params)
+
+    if not products:
+        await bot.send_message(chat_id, "No products available to remove.")
+        return
+
+    markup = admin_remove_products_keyboard(products, next_cursor)
+    await bot.send_message(chat_id, "Select a product to remove:", reply_markup=markup)
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith(REMOVE_PRODUCT_CURSOR_PREFIX))
+async def handle_remove_pagination(call):
+    cursor = call.data.removeprefix(REMOVE_PRODUCT_CURSOR_PREFIX)
+    cursor = int(cursor) if cursor.isdigit() else 0
+    if cursor == 0:
+        await bot.answer_callback_query(call.id, "Invalid cursor.")
+        return
+    await bot.delete_message(call.message.chat.id, call.message.message_id)
+    await show_products_to_remove(call.message.chat.id, cursor)
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith(REMOVE_PRODUCT_PREFIX))
+async def handle_product_selection(call):
+    product_id = int(call.data.removeprefix(REMOVE_PRODUCT_PREFIX))
+    if product_id == 0:
+        await bot.answer_callback_query(call.id, "Invalid product ID.")
+        return
+    product_service = ProductService()
+    product = await product_service.get_product_by_id(product_id)
+
+    if not product:
+        await bot.answer_callback_query(call.id, "Product not found.")
+        return
+
+    caption = (
+        f"Are you sure you want to remove this product?\n\n"
+        f"Name: {product.name}\n"
+        f"Description: {product.description}\n"
+        f"Price: {product.price} {product.currency}"
+    )
+
+    markup = confirm_remove_product_keyboard(product_id)
+
+    if product.image_url:
+        await bot.send_photo(
+            call.message.chat.id, product.image_url, caption=caption, reply_markup=markup
+        )
+    else:
+        await bot.send_message(call.message.chat.id, caption, reply_markup=markup)
+    
+    await bot.delete_message(call.message.chat.id, call.message.message_id)
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith(CANCEL_REMOVE_PRODUCT_PREFIX))
+async def handle_cancel_remove(call):
+    await bot.delete_message(call.message.chat.id, call.message.message_id)
+    await bot.send_message(call.message.chat.id, "Removal canceled.")
+    await show_products_to_remove(call.message.chat.id, 0)
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith(CONFIRM_REMOVE_PRODUCT_PREFIX))
+async def handle_confirm_remove(call):
+    product_id = int(call.data.removeprefix(CONFIRM_REMOVE_PRODUCT_PREFIX))
+    product_service = ProductService()
+    storage_service = StorageService()
+
+    product = await product_service.get_product_by_id(product_id)
+    if not product:
+        await bot.answer_callback_query(call.id, "Product not found.")
+        return
+
+    # Delete image if exists
+    if product.image_url:
+        # Extract file name from URL or store it differently? 
+        # The URL is https://{bucket}.{region}.cdn.digitaloceanspaces.com/{bucket}/{file_name}
+        # We need just the file_name (key).
+        # Based on storage.py: url = f"https://{self.bucket}.{self.region}.cdn.digitaloceanspaces.com/{self.bucket}/{file_name}"
+        # So we can split by / and take the last part? 
+        # Wait, the URL construction in storage.py is:
+        # url = f"https://{self.bucket}.{self.region}.cdn.digitaloceanspaces.com/{self.bucket}/{file_name}"
+        # So yes, the last part is the file name.
+        # However, let's be safer.
+        
+        try:
+            file_name = product.image_url.split("/")[-1]
+            # Also need to handle if there are folders in the key like "products/uuid.ext"
+            # In add_product.py: file_name = f"products/{uuid.uuid4()}.{file_ext}"
+            # So the URL will end with products/uuid.ext
+            # Let's check the URL structure again.
+            # https://bucket.region.cdn.../bucket/products/uuid.ext
+            # So splitting by / might give uuid.ext, but we need products/uuid.ext?
+            # Let's look at storage.py again.
+            # Key=file_name
+            # url = .../{self.bucket}/{file_name}
+            # So if file_name is "products/foo.jpg", url ends with /bucket/products/foo.jpg
+            # So we need to extract everything after /bucket/
+            
+            # A safer way might be to store the key in the DB, but we don't have that column.
+            # We have to parse the URL.
+            from src.config import settings
+            bucket_part = f"/{settings.do_bucket}/"
+            if bucket_part in product.image_url:
+                file_name = product.image_url.split(bucket_part)[-1]
+                await storage_service.delete_file(file_name)
+        except Exception as e:
+            print(f"Error deleting file: {e}")
+
+    await product_service.delete_product(product_id)
+    await bot.delete_message(call.message.chat.id, call.message.message_id)
+    await bot.answer_callback_query(call.id, "Product removed successfully.")
+
+    msg = (
+        f"Product removed successfully!\n\n"
+        f"Product ID: {product_id}\n"
+        f"Product Name: {product.name}\n"
+    )
+    await bot.send_message(call.message.chat.id, msg)
+    await show_products_to_remove(call.message.chat.id, 0)

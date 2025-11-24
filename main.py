@@ -16,7 +16,10 @@ from src.constants import (
 )
 from src.db.migrations import apply_migrations
 from src.loader import bot
+from src.middlewares import LoggingMiddleware
 from src.utils.logging import setup_logging
+import src.handlers
+
 
 if sys.version_info < (3, 12):
     current_version = ".".join(map(str, sys.version_info[:3]))
@@ -47,6 +50,7 @@ async def main():
     await apply_migrations()
 
     setup_logging()
+    bot.setup_middleware(LoggingMiddleware())
     await register_commands()
     logging.getLogger(__name__).info("Bot starting with long polling...")
     await bot.infinity_polling(
