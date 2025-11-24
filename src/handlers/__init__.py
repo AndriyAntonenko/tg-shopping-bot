@@ -1,1 +1,1 @@
-from . import admin, catalog, forms, start
+from . import admin, catalog, forms, start, fallback
