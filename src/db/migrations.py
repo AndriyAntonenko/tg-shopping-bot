@@ -1,84 +1,47 @@
 import logging
-
+import os
 from aiosqlite import Connection
 
-from ..config import settings
 from .connection import get_db_connection
+
+
+logger = logging.getLogger(__name__)
 
 
 async def apply_migrations():
     db_connection: Connection = await get_db_connection()
     cursor = await db_connection.cursor()
 
+    # Create migrations table
     await cursor.execute("""
-    CREATE TABLE IF NOT EXISTS products (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      description TEXT,
-      image_url TEXT,
-      price REAL NOT NULL,
-      currency TEXT NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-  """)
-
-    await cursor.execute("""
-    CREATE TABLE IF NOT EXISTS orders (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      product_id INTEGER NOT NULL,
-      user_id INTEGER NOT NULL,
-      status TEXT NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (product_id) REFERENCES products(id),
-      FOREIGN KEY (user_id) REFERENCES users(id)
-    )
-  """)
-
-    await cursor.execute(
-        """
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      telegram_user_id INTEGER NOT NULL UNIQUE,
-      telegram_username TEXT,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      is_admin BOOLEAN DEFAULT FALSE
-    )
-    """
-    )
-
-    if settings.administrator_id and settings.administrator_username:
-        await cursor.execute(
-            """
-      INSERT INTO users(telegram_user_id, telegram_username, is_admin)
-      VALUES (?, ?, TRUE)
-      ON CONFLICT DO UPDATE SET is_admin=TRUE;
-      """,
-            (settings.administrator_id, settings.administrator_username),
+        CREATE TABLE IF NOT EXISTS migrations (
+            filename TEXT PRIMARY KEY,
+            applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
+    """)
 
-    if settings.initial_products_json:
-        try:
-            with open(settings.initial_products_json, "r", encoding="utf-8") as f:
-                import json
+    # Get list of migration files
+    migrations_dir = os.path.join(os.path.dirname(__file__), "migrations")
+    migration_files = sorted([f for f in os.listdir(migrations_dir) if f.endswith(".sql")])
 
-                products = json.load(f)
-                for product in products:
-                    await cursor.execute(
-                        """
-              INSERT INTO products (name, description, image_url, price, currency)
-              VALUES (?, ?, ?, ?, ?)
-              """,
-                        (
-                            product.get("name"),
-                            product.get("description"),
-                            product.get("image_url"),
-                            product.get("price"),
-                            product.get("currency"),
-                        ),
-                    )
-        except FileNotFoundError:
-            logging.getLogger(__name__).warning(
-                f"Initial products JSON file not found at {settings.initial_products_json}. Skipping initial data load."
-            )
+    for filename in migration_files:
+        # Check if migration already applied
+        await cursor.execute("SELECT 1 FROM migrations WHERE filename = ?", (filename,))
+        if await cursor.fetchone():
+            logger.info("Migration already applied: %s", filename)
+            continue
+
+        logger.info(f"Applying migration: {filename}")
+        
+        # Read and execute migration
+        file_path = os.path.join(migrations_dir, filename)
+        with open(file_path, "r") as f:
+            sql_script = f.read()
+            await cursor.executescript(sql_script)
+
+        # Record migration
+        await cursor.execute("INSERT INTO migrations (filename) VALUES (?)", (filename,))
+        await db_connection.commit()
 
     await db_connection.commit()
+    logger.info("Database migrations completed.")

@@ -47,9 +47,9 @@ async def register_commands():
 
 
 async def main():
+    setup_logging()
     await apply_migrations()
 
-    setup_logging()
     bot.setup_middleware(LoggingMiddleware())
     await register_commands()
     logging.getLogger(__name__).info("Bot starting with long polling...")
