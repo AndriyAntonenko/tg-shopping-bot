@@ -62,3 +62,18 @@ class UsersService:
         await conn.commit()
 
         return from_db_row_to_user(user_row)
+
+    async def get_admins(self) -> list[User]:
+        conn = await get_db_connection()
+        cursor = await conn.cursor()
+
+        await cursor.execute(
+            """
+            SELECT id, telegram_user_id, telegram_username, created_at, is_admin
+            FROM users
+            WHERE is_admin = 1;
+            """
+        )
+
+        rows = await cursor.fetchall()
+        return [from_db_row_to_user(row) for row in rows]

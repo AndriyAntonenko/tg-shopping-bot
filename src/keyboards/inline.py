@@ -14,7 +14,10 @@ from ..constants import (
     CONFIRM_REMOVE_PRODUCT_PREFIX,
     CANCEL_REMOVE_PRODUCT_PREFIX,
     REMOVE_PRODUCT_CURSOR_PREFIX,
+    VIEW_FEEDBACKS_CQ_PREFIX,
+    VIEW_FEEDBACK_DETAILS_CQ_PREFIX,
 )
+from ..services.feedback import Feedback
 from ..services.orders import OrderItemDetailed, OrderStatus
 from ..services.products import ProductItem
 
@@ -56,6 +59,11 @@ def admin_keyboard() -> InlineKeyboardMarkup:
     kb.add(
         InlineKeyboardButton(
             text="View Pending Orders", callback_data=VIEW_PENDING_ORDERS_CQ
+        )
+    )
+    kb.add(
+        InlineKeyboardButton(
+            text="Feedbacks", callback_data=f"{VIEW_FEEDBACKS_CQ_PREFIX}0"
         )
     )
     return kb
@@ -128,6 +136,50 @@ def payment_keyboard(payment_url: str, order_id: int) -> InlineKeyboardMarkup:
     kb.add(
         InlineKeyboardButton(
             text="I have paid ✅", callback_data=f"{CHECK_PAYMENT_CQ_PREFIX}{order_id}"
+        )
+    )
+    return kb
+    return kb
+
+
+def feedbacks_list_keyboard(
+    feedbacks: list[Feedback], page: int, total_pages: int
+) -> InlineKeyboardMarkup:
+    kb = InlineKeyboardMarkup(row_width=1)
+    for feedback in feedbacks:
+        username = f"@{feedback.user_telegram_username}" if feedback.user_telegram_username else f"ID: {feedback.user_id}"
+        text = f"{username}: {feedback.feedback[:30]}..."
+        kb.add(
+            InlineKeyboardButton(
+                text=text,
+                callback_data=f"{VIEW_FEEDBACK_DETAILS_CQ_PREFIX}{feedback.id}",
+            )
+        )
+
+    nav_buttons = []
+    if page > 0:
+        nav_buttons.append(
+            InlineKeyboardButton(
+                text="⬅️ Prev", callback_data=f"{VIEW_FEEDBACKS_CQ_PREFIX}{page - 1}"
+            )
+        )
+    if page < total_pages - 1:
+        nav_buttons.append(
+            InlineKeyboardButton(
+                text="Next ➡️", callback_data=f"{VIEW_FEEDBACKS_CQ_PREFIX}{page + 1}"
+            )
+        )
+    if nav_buttons:
+        kb.row(*nav_buttons)
+
+    return kb
+
+
+def feedback_details_keyboard(back_page: int) -> InlineKeyboardMarkup:
+    kb = InlineKeyboardMarkup()
+    kb.add(
+        InlineKeyboardButton(
+            text="Back to List", callback_data=f"{VIEW_FEEDBACKS_CQ_PREFIX}{back_page}"
         )
     )
     return kb

@@ -1,1 +1,1 @@
-from . import add_product
+from . import add_product, feedback

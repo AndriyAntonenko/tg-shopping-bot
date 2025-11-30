@@ -13,6 +13,7 @@ from src.constants import (
     REMOVE_PRODUCT_CMD,
     START_CMD,
     VIEW_ALL_ORDERS_CMD,
+    FEEDBACK_CMD
 )
 from src.db.migrations import apply_migrations
 from src.loader import bot
@@ -41,6 +42,9 @@ async def register_commands():
         ),
         BotCommand(
             command=REMOVE_PRODUCT_CMD, description="Remove a product from the catalog"
+        ),
+        BotCommand(
+            command=FEEDBACK_CMD, description="Send feedback about the bot"
         ),
     ]
     await bot.set_my_commands(commands)
