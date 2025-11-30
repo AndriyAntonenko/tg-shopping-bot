@@ -9,6 +9,8 @@ load_dotenv()
 @dataclass
 class Settings:
     bot_token: str = os.getenv("TG_BOT_KEY", "")
+    bot_name: str = os.getenv("TG_BOT_NAME", "")
+    stripe_api_key: str = os.getenv("STRIPE_API_KEY", "")
     parse_mode: str = "HTML"
     skip_pending: bool = True
     long_polling_timeout: int = 20
@@ -23,11 +25,17 @@ class Settings:
 
 settings = Settings()
 
+if not settings.bot_name:
+    raise RuntimeError("TG_BOT_NAME is not set in environment variables.")
+
 if not settings.bot_token:
     raise RuntimeError("TG_BOT_KEY is not set in environment variables.")
 
 if not settings.database_path:
     raise RuntimeError("DATABASE_PATH is not set in environment variables.")
+
+if not settings.stripe_api_key:
+    raise RuntimeError("STRIPE_API_KEY is not set in environment variables.")
 
 # validating DigitalOcean settings
 if not settings.do_region:

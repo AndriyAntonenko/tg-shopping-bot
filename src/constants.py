@@ -1,4 +1,5 @@
 VIEW_PENDING_ORDERS_CQ = "view_pending_orders"
+CHECK_PAYMENT_CQ_PREFIX = "check_payment_"
 VIEW_ORDER_DETAILS_CQ_PREFIX = "single_order_"
 
 APPROVE_ORDER_CQ_PREFIX = "approve_order_"

@@ -7,9 +7,10 @@ from ..constants import (
     NEXT_CATALOG_CQ_PREFIX,
     PRODUCT_DETAILS_CQ_PREFIX,
 )
-from ..keyboards.inline import buy_product_keyboard, catalog_keyboard
+from ..keyboards.inline import buy_product_keyboard, catalog_keyboard, payment_keyboard
 from ..loader import bot
 from ..services.orders import OrdersService
+from ..services.payments import PaymentService
 from ..services.products import GetProductsListParams, ProductService
 from ..services.users import UsersService
 
@@ -112,14 +113,34 @@ async def handle_buy_product(call):
         call.from_user.id, call.from_user.username
     )
 
+    # Get product details for payment
+    products_service = ProductService()
+    product = await products_service.get_product_by_id(product_id)
+    if not product:
+        await bot.answer_callback_query(call.id, "Product not found.")
+        return
+
     order = await orders_service.create_order(product_id, user.id)
 
-    msg = f"""Order Created Successfully! 🎉\n
+    # Create Stripe Checkout Session
+    payment_service = PaymentService()
+    try:
+        session_id, payment_url = await payment_service.create_checkout_session(
+            order.id, product.name, product.price, product.currency
+        )
+        await orders_service.update_order_payment_info(order.id, session_id, payment_url)
+
+        msg = f"""Order Created Successfully! 🎉\n
 Order ID: {order.id}
 Status: {order.status}
-Thank you for your purchase! 🛒
+Price: {product.price} {product.currency}
 
-Our administrator will contact you soon to finalize the details.
+Please complete the payment using the button below. 👇
 """
+        await bot.send_message(
+            call.message.chat.id, msg, reply_markup=payment_keyboard(payment_url, order.id)
+        )
 
-    await bot.send_message(call.message.chat.id, msg)
+    except Exception as e:
+        await bot.send_message(call.message.chat.id, f"Error creating payment: {e}")
+        # Optionally cancel order or log error

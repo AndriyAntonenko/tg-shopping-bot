@@ -4,6 +4,7 @@ from ..constants import (
     APPROVE_ORDER_CQ_PREFIX,
     BUY_PRODUCT_CQ_PREFIX,
     CANCEL_ORDER_CQ_PREFIX,
+    CHECK_PAYMENT_CQ_PREFIX,
     NEXT_CATALOG_CQ_PREFIX,
     PRODUCT_DETAILS_CQ_PREFIX,
     VIEW_ORDER_DETAILS_CQ_PREFIX,
@@ -14,7 +15,7 @@ from ..constants import (
     CANCEL_REMOVE_PRODUCT_PREFIX,
     REMOVE_PRODUCT_CURSOR_PREFIX,
 )
-from ..services.orders import OrderItemDetailed
+from ..services.orders import OrderItemDetailed, OrderStatus
 from ..services.products import ProductItem
 
 
@@ -63,9 +64,10 @@ def admin_keyboard() -> InlineKeyboardMarkup:
 def pending_orders_keyboard(orders: list[OrderItemDetailed]) -> InlineKeyboardMarkup:
     kb = InlineKeyboardMarkup(row_width=1)
     for order in orders:
+        paid_data = "PAID ✅" if order.status == OrderStatus.PAID else "UNPAID ❌"
         kb.add(
             InlineKeyboardButton(
-                text=f"#{order.id}: @{order.user_telegram_username} ordered {order.product_name}",
+                text=f"No.{order.id}: {order.user_telegram_username} ordered {order.product_name}. {paid_data}",
                 callback_data=f"{VIEW_ORDER_DETAILS_CQ_PREFIX}{order.id}",
             )
         )
@@ -116,3 +118,16 @@ def confirm_remove_product_keyboard(product_id: int) -> InlineKeyboardMarkup:
         ),
     )
     return markup
+
+
+def payment_keyboard(payment_url: str, order_id: int) -> InlineKeyboardMarkup:
+    kb = InlineKeyboardMarkup()
+    kb.add(
+        InlineKeyboardButton(text="Pay Now 💳", url=payment_url)
+    )
+    kb.add(
+        InlineKeyboardButton(
+            text="I have paid ✅", callback_data=f"{CHECK_PAYMENT_CQ_PREFIX}{order_id}"
+        )
+    )
+    return kb

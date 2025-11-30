@@ -49,6 +49,11 @@ async def cmd_view_all_orders(message: Message):
         await bot.answer_callback_query(
             message.id, "There are no pending orders at the moment."
         )
+        await bot.send_message(
+            message.chat.id,
+            "There are no pending orders at the moment.",
+        )
+        return
 
     pending_orders = await orders_service.get_pending_orders_list(None)
     msg = "You have {count} pending orders.\n\nClick the button below to check order details".format(
@@ -70,6 +75,11 @@ async def handle_view_pending_orders(call):
         await bot.answer_callback_query(
             call.id, "There are no pending orders at the moment."
         )
+        await bot.send_message(
+            call.message.chat.id,
+            "There are no pending orders at the moment.",
+        )
+        return
 
     pending_orders = await orders_service.get_pending_orders_list(None)
     msg = "You have {count} pending orders.\n\nClick the button below to check order details".format(
