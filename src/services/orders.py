@@ -38,7 +38,8 @@ class OrderItemDetailed:
 
 def from_db_row_to_order_item(row) -> OrderItem:
     # row: id, product_id, user_id, status, created_at, stripe_session_id, payment_url
-    # Ensure row has enough elements, handle cases where new columns might be missing if query not updated
+    # Ensure row has enough elements, handle cases where new columns might 
+    # be missing if query not updated
     stripe_session_id = row[5] if len(row) > 5 else None
     payment_url = row[6] if len(row) > 6 else None
     return OrderItem(
