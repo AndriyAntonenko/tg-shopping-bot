@@ -31,7 +31,13 @@ class UsersService:
 
         await cursor.execute(
             """
-      SELECT id, telegram_user_id, telegram_username, created_at, is_admin, language_code
+      SELECT 
+        id,
+        telegram_user_id,
+        telegram_username,
+        created_at,
+        is_admin,
+        language_code
       FROM users
       WHERE telegram_user_id = ?;
       """,
@@ -54,8 +60,15 @@ class UsersService:
             """
       INSERT INTO users (telegram_user_id, telegram_username)
       VALUES (?, ?)
-      ON CONFLICT(telegram_user_id) DO UPDATE SET telegram_username=excluded.telegram_username
-      RETURNING id, telegram_user_id, telegram_username, created_at, is_admin, language_code;
+      ON CONFLICT(telegram_user_id) 
+      DO UPDATE SET telegram_username=excluded.telegram_username
+      RETURNING 
+        id,
+        telegram_user_id,
+        telegram_username,
+        created_at,
+        is_admin,
+        language_code;
       """,
             (telegram_user_id, telegram_username),
         )
@@ -71,7 +84,13 @@ class UsersService:
 
         await cursor.execute(
             """
-            SELECT id, telegram_user_id, telegram_username, created_at, is_admin, language_code
+            SELECT 
+                id,
+                telegram_user_id,
+                telegram_username,
+                created_at,
+                is_admin,
+                language_code
             FROM users
             WHERE is_admin = 1;
             """

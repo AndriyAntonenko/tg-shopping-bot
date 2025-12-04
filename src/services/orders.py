@@ -189,7 +189,14 @@ class OrdersService:
 
         await cursor.execute(
             """
-            SELECT id, product_id, user_id, status, created_at, stripe_session_id, payment_url
+            SELECT 
+                id,
+                product_id,
+                user_id,
+                status,
+                created_at,
+                stripe_session_id,
+                payment_url
             FROM orders
             WHERE id = ?;
             """,
