@@ -1,8 +1,9 @@
-from telebot.types import Message
 from telebot.asyncio_handler_backends import State, StatesGroup
+from telebot.types import Message
 
-from ...constants import FEEDBACK_CMD, FEEDBACK_MESSAGE
+from ...constants import FEEDBACK_CMD
 from ...loader import bot
+from ...resources.strings import get_string
 from ...services.feedback import FeedbackService
 from ...services.users import UsersService
 
@@ -13,21 +14,29 @@ class FeedbackState(StatesGroup):
 
 @bot.message_handler(commands=[FEEDBACK_CMD])
 async def cmd_feedback(message: Message):
-    await bot.set_state(message.from_user.id, FeedbackState.waiting_for_feedback, message.chat.id)
+    lang_code = getattr(message, "language_code", "en")
+    await bot.set_state(
+        message.from_user.id, FeedbackState.waiting_for_feedback, message.chat.id
+    )
     await bot.send_message(
         message.chat.id,
-        "Please enter your feedback about our bot:",
+        get_string("enter_feedback", lang_code),
     )
 
 
-@bot.message_handler(func=lambda message: message.text == FEEDBACK_MESSAGE)
+@bot.message_handler(
+    func=lambda message: message.text
+    in [get_string("feedback", "en"), get_string("feedback", "uk")]
+)
 async def handle_feedback(message: Message):
-    await bot.set_state(message.from_user.id, FeedbackState.waiting_for_feedback, message.chat.id)
+    lang_code = getattr(message, "language_code", "en")
+    await bot.set_state(
+        message.from_user.id, FeedbackState.waiting_for_feedback, message.chat.id
+    )
     await bot.send_message(
         message.chat.id,
-        "Please enter your feedback about our bot:",
+        get_string("enter_feedback", lang_code),
     )
-
 
 
 @bot.message_handler(state=FeedbackState.waiting_for_feedback)
@@ -39,7 +48,7 @@ async def handle_feedback_message(message: Message):
     # Save feedback
     feedback_service = FeedbackService()
     users_service = UsersService()
-    
+
     # We need the internal user ID for the database, not the Telegram ID
     user = await users_service.get_user_if_exists(user_id)
     if user:
@@ -56,8 +65,9 @@ async def handle_feedback_message(message: Message):
             except Exception as e:
                 print(f"Failed to send feedback to admin {admin.telegram_user_id}: {e}")
 
+    lang_code = getattr(message, "language_code", "en")
     await bot.send_message(
         message.chat.id,
-        "Thank you for your feedback! It has been sent to our admins.",
+        get_string("feedback_sent", lang_code),
     )
     await bot.delete_state(message.from_user.id, message.chat.id)

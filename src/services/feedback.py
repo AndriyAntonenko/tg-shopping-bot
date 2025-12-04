@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+
 from ..db.connection import get_db_connection
 
 

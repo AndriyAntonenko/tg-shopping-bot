@@ -26,6 +26,7 @@ ADD_PRODUCT_CMD = "add_item"
 REMOVE_PRODUCT_CMD = "remove_item"
 FEEDBACK_CMD = "feedback"
 VIEW_FEEDBACKS_CMD = "feedbacks"
+LANGUAGE_CMD = "language"
 
 BROWSE_CATALOG_MESSAGE = "Browse Catalog"
 FEEDBACK_MESSAGE = "Feedback"

@@ -1,1 +1,9 @@
-from . import admin, catalog, forms, start, fallback, payments
+from . import (
+    admin,
+    catalog,
+    common,
+    fallback,
+    language,
+    payments,
+    start,
+)

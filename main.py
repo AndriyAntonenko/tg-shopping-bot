@@ -9,18 +9,17 @@ from src.constants import (
     ADD_PRODUCT_CMD,
     ADMIN_CMD,
     CATALOG_CMD,
+    FEEDBACK_CMD,
     HELP_CMD,
+    LANGUAGE_CMD,
     REMOVE_PRODUCT_CMD,
     START_CMD,
     VIEW_ALL_ORDERS_CMD,
-    FEEDBACK_CMD
 )
 from src.db.migrations import apply_migrations
 from src.loader import bot
-from src.middlewares import LoggingMiddleware
+from src.middlewares import LanguageMiddleware, LoggingMiddleware
 from src.utils.logging import setup_logging
-import src.handlers
-
 
 if sys.version_info < (3, 12):
     current_version = ".".join(map(str, sys.version_info[:3]))
@@ -43,9 +42,8 @@ async def register_commands():
         BotCommand(
             command=REMOVE_PRODUCT_CMD, description="Remove a product from the catalog"
         ),
-        BotCommand(
-            command=FEEDBACK_CMD, description="Send feedback about the bot"
-        ),
+        BotCommand(command=FEEDBACK_CMD, description="Send feedback about the bot"),
+        BotCommand(command=LANGUAGE_CMD, description="Change language"),
     ]
     await bot.set_my_commands(commands)
 
@@ -55,6 +53,7 @@ async def main():
     await apply_migrations()
 
     bot.setup_middleware(LoggingMiddleware())
+    bot.setup_middleware(LanguageMiddleware())
     await register_commands()
     logging.getLogger(__name__).info("Bot starting with long polling...")
     await bot.infinity_polling(

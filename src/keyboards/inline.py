@@ -4,18 +4,17 @@ from ..constants import (
     APPROVE_ORDER_CQ_PREFIX,
     BUY_PRODUCT_CQ_PREFIX,
     CANCEL_ORDER_CQ_PREFIX,
+    CANCEL_REMOVE_PRODUCT_PREFIX,
     CHECK_PAYMENT_CQ_PREFIX,
+    CONFIRM_REMOVE_PRODUCT_PREFIX,
     NEXT_CATALOG_CQ_PREFIX,
     PRODUCT_DETAILS_CQ_PREFIX,
+    REMOVE_PRODUCT_CURSOR_PREFIX,
+    REMOVE_PRODUCT_PREFIX,
+    VIEW_FEEDBACK_DETAILS_CQ_PREFIX,
+    VIEW_FEEDBACKS_CQ_PREFIX,
     VIEW_ORDER_DETAILS_CQ_PREFIX,
     VIEW_PENDING_ORDERS_CQ,
-
-    REMOVE_PRODUCT_PREFIX,
-    CONFIRM_REMOVE_PRODUCT_PREFIX,
-    CANCEL_REMOVE_PRODUCT_PREFIX,
-    REMOVE_PRODUCT_CURSOR_PREFIX,
-    VIEW_FEEDBACKS_CQ_PREFIX,
-    VIEW_FEEDBACK_DETAILS_CQ_PREFIX,
 )
 from ..services.feedback import Feedback
 from ..services.orders import OrderItemDetailed, OrderStatus
@@ -94,7 +93,10 @@ def admin_order_commands_keyboard(order_id: int) -> InlineKeyboardMarkup:
     )
     return kb
 
-def admin_remove_products_keyboard(products: list[ProductItem], next_cursor: int | None = None) -> InlineKeyboardMarkup:
+
+def admin_remove_products_keyboard(
+    products: list[ProductItem], next_cursor: int | None = None
+) -> InlineKeyboardMarkup:
     markup = InlineKeyboardMarkup(row_width=2)
     markup.add(
         *[
@@ -109,7 +111,8 @@ def admin_remove_products_keyboard(products: list[ProductItem], next_cursor: int
     if next_cursor:
         markup.add(
             InlineKeyboardButton(
-                text="Next Page >>", callback_data=f"{REMOVE_PRODUCT_CURSOR_PREFIX}{next_cursor}"
+                text="Next Page >>",
+                callback_data=f"{REMOVE_PRODUCT_CURSOR_PREFIX}{next_cursor}",
             )
         )
     return markup
@@ -119,7 +122,8 @@ def confirm_remove_product_keyboard(product_id: int) -> InlineKeyboardMarkup:
     markup = InlineKeyboardMarkup()
     markup.add(
         InlineKeyboardButton(
-            text="Yes, Remove", callback_data=f"{CONFIRM_REMOVE_PRODUCT_PREFIX}{product_id}"
+            text="Yes, Remove",
+            callback_data=f"{CONFIRM_REMOVE_PRODUCT_PREFIX}{product_id}",
         ),
         InlineKeyboardButton(
             text="No, Cancel", callback_data=f"{CANCEL_REMOVE_PRODUCT_PREFIX}"
@@ -130,9 +134,7 @@ def confirm_remove_product_keyboard(product_id: int) -> InlineKeyboardMarkup:
 
 def payment_keyboard(payment_url: str, order_id: int) -> InlineKeyboardMarkup:
     kb = InlineKeyboardMarkup()
-    kb.add(
-        InlineKeyboardButton(text="Pay Now 💳", url=payment_url)
-    )
+    kb.add(InlineKeyboardButton(text="Pay Now 💳", url=payment_url))
     kb.add(
         InlineKeyboardButton(
             text="I have paid ✅", callback_data=f"{CHECK_PAYMENT_CQ_PREFIX}{order_id}"
@@ -147,7 +149,11 @@ def feedbacks_list_keyboard(
 ) -> InlineKeyboardMarkup:
     kb = InlineKeyboardMarkup(row_width=1)
     for feedback in feedbacks:
-        username = f"@{feedback.user_telegram_username}" if feedback.user_telegram_username else f"ID: {feedback.user_id}"
+        username = (
+            f"@{feedback.user_telegram_username}"
+            if feedback.user_telegram_username
+            else f"ID: {feedback.user_id}"
+        )
         text = f"{username}: {feedback.feedback[:30]}..."
         kb.add(
             InlineKeyboardButton(

@@ -10,6 +10,7 @@ class User:
     telegram_username: str
     created_at: str
     is_admin: bool
+    language_code: str
 
 
 def from_db_row_to_user(row) -> User:
@@ -19,6 +20,7 @@ def from_db_row_to_user(row) -> User:
         telegram_username=row[2],
         created_at=row[3],
         is_admin=bool(row[4]),
+        language_code=row[5],
     )
 
 
@@ -29,7 +31,7 @@ class UsersService:
 
         await cursor.execute(
             """
-      SELECT id, telegram_user_id, telegram_username, created_at, is_admin
+      SELECT id, telegram_user_id, telegram_username, created_at, is_admin, language_code
       FROM users
       WHERE telegram_user_id = ?;
       """,
@@ -53,7 +55,7 @@ class UsersService:
       INSERT INTO users (telegram_user_id, telegram_username)
       VALUES (?, ?)
       ON CONFLICT(telegram_user_id) DO UPDATE SET telegram_username=excluded.telegram_username
-      RETURNING id, telegram_user_id, telegram_username, created_at, is_admin;
+      RETURNING id, telegram_user_id, telegram_username, created_at, is_admin, language_code;
       """,
             (telegram_user_id, telegram_username),
         )
@@ -69,7 +71,7 @@ class UsersService:
 
         await cursor.execute(
             """
-            SELECT id, telegram_user_id, telegram_username, created_at, is_admin
+            SELECT id, telegram_user_id, telegram_username, created_at, is_admin, language_code
             FROM users
             WHERE is_admin = 1;
             """
@@ -77,3 +79,13 @@ class UsersService:
 
         rows = await cursor.fetchall()
         return [from_db_row_to_user(row) for row in rows]
+
+    async def update_user_language(self, telegram_user_id: int, language_code: str):
+        conn = await get_db_connection()
+        cursor = await conn.cursor()
+
+        await cursor.execute(
+            "UPDATE users SET language_code = ? WHERE telegram_user_id = ?",
+            (language_code, telegram_user_id),
+        )
+        await conn.commit()

@@ -2,8 +2,6 @@ from telebot.types import CallbackQuery
 
 from ..constants import CHECK_PAYMENT_CQ_PREFIX
 from ..loader import bot
-from ..services.orders import OrdersService, OrderStatus
-from ..services.payments import PaymentService
 from .common import check_payment_logic
 
 
@@ -16,9 +14,11 @@ async def handle_check_payment(call: CallbackQuery):
         await bot.answer_callback_query(call.id, "Invalid order ID.")
         return
 
+    lang_code = getattr(call, "language_code", "en")
     await check_payment_logic(
         message_chat_id=call.message.chat.id,
         user_id=call.from_user.id,
         order_id=int(order_id_str),
-        callback_query_id=call.id
+        callback_query_id=call.id,
+        lang_code=lang_code,
     )

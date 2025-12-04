@@ -87,8 +87,7 @@ class OrdersService:
         return from_db_row_to_order_item(new_order)
 
     async def get_pending_orders_list(
-        self,
-        ids: list[int] | None
+        self, ids: list[int] | None
     ) -> list[OrderItemDetailed]:
         conn = await get_db_connection()
         cursor = await conn.cursor()
@@ -114,8 +113,10 @@ class OrdersService:
         INNER JOIN products p ON o.product_id = p.id
         WHERE status IN (?, ?) {ids_condition}
         ORDER BY o.created_at ASC;
-        """.format(ids_condition=ids_condition);
-        await cursor.execute(query, (OrderStatus.PENDING.value, OrderStatus.PAID.value, *(ids or [])))
+        """.format(ids_condition=ids_condition)
+        await cursor.execute(
+            query, (OrderStatus.PENDING.value, OrderStatus.PAID.value, *(ids or []))
+        )
 
         rows = await cursor.fetchall()
 
@@ -199,4 +200,3 @@ class OrdersService:
         if row:
             return from_db_row_to_order_item(row)
         return None
-

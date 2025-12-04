@@ -1,7 +1,9 @@
 import stripe
+
 from ..config import settings
 
 stripe.api_key = settings.stripe_api_key
+
 
 class PaymentService:
     async def create_checkout_session(

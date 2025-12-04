@@ -1,9 +1,9 @@
 import logging
 import os
+
 from aiosqlite import Connection
 
 from .connection import get_db_connection
-
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,9 @@ async def apply_migrations():
 
     # Get list of migration files
     migrations_dir = os.path.join(os.path.dirname(__file__), "migrations")
-    migration_files = sorted([f for f in os.listdir(migrations_dir) if f.endswith(".sql")])
+    migration_files = sorted(
+        [f for f in os.listdir(migrations_dir) if f.endswith(".sql")]
+    )
 
     for filename in migration_files:
         # Check if migration already applied
@@ -32,7 +34,7 @@ async def apply_migrations():
             continue
 
         logger.info(f"Applying migration: {filename}")
-        
+
         # Read and execute migration
         file_path = os.path.join(migrations_dir, filename)
         with open(file_path, "r") as f:
@@ -40,7 +42,9 @@ async def apply_migrations():
             await cursor.executescript(sql_script)
 
         # Record migration
-        await cursor.execute("INSERT INTO migrations (filename) VALUES (?)", (filename,))
+        await cursor.execute(
+            "INSERT INTO migrations (filename) VALUES (?)", (filename,)
+        )
         await db_connection.commit()
 
     await db_connection.commit()

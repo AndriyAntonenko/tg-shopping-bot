@@ -1,7 +1,6 @@
 from telebot.types import Message
 
 from ..constants import (
-    BROWSE_CATALOG_MESSAGE,
     BUY_PRODUCT_CQ_PREFIX,
     CATALOG_CMD,
     NEXT_CATALOG_CQ_PREFIX,
@@ -9,13 +8,14 @@ from ..constants import (
 )
 from ..keyboards.inline import buy_product_keyboard, catalog_keyboard, payment_keyboard
 from ..loader import bot
+from ..resources.strings import get_string
 from ..services.orders import OrdersService
 from ..services.payments import PaymentService
 from ..services.products import GetProductsListParams, ProductService
 from ..services.users import UsersService
 
 
-async def send_catalog(message: Message, user_cursor: int = 0):
+async def send_catalog(message: Message, user_cursor: int = 0, lang_code: str = "en"):
     products_service = ProductService()
     params: GetProductsListParams = GetProductsListParams(
         limit=6, cursor=user_cursor, sort_desc=True
@@ -25,26 +25,30 @@ async def send_catalog(message: Message, user_cursor: int = 0):
 
     msg = None
     if user_cursor == 0:
-        msg = """Here is our product catalog. Browse through our selection of amazing products!\n
-Total products available: {total_count}.\n
-Good luck! 🎉
-""".format(total_count=total_count)
+        msg = get_string("catalog_intro", lang_code).format(total_count=total_count)
     else:
-        msg = "Here are more products from our catalog! Enjoy browsing! 🎉"
+        msg = get_string("catalog_more", lang_code)
 
     await bot.send_message(
-        message.chat.id, msg, reply_markup=catalog_keyboard(products, next_cursor)
+        message.chat.id,
+        msg,
+        reply_markup=catalog_keyboard(products, next_cursor, lang_code),
     )
 
 
 @bot.message_handler(commands=[CATALOG_CMD])
 async def cmd_catalog(message: Message):
-    await send_catalog(message)
+    lang_code = getattr(message, "language_code", "en")
+    await send_catalog(message, lang_code=lang_code)
 
 
-@bot.message_handler(func=lambda message: message.text == BROWSE_CATALOG_MESSAGE)
+@bot.message_handler(
+    func=lambda message: message.text
+    in [get_string("browse_catalog", "en"), get_string("browse_catalog", "uk")]
+)
 async def handle_browse_catalog(message: Message):
-    await send_catalog(message)
+    lang_code = getattr(message, "language_code", "en")
+    await send_catalog(message, lang_code=lang_code)
 
 
 @bot.callback_query_handler(
@@ -53,8 +57,9 @@ async def handle_browse_catalog(message: Message):
 async def handle_catalog_pagination(call):
     cursor_str = call.data.removeprefix(NEXT_CATALOG_CQ_PREFIX)
     cursor = int(cursor_str) if cursor_str.isdigit() else 0
+    lang_code = getattr(call, "language_code", "en")
     await bot.delete_message(call.message.chat.id, call.message.message_id)
-    await send_catalog(call.message, cursor)
+    await send_catalog(call.message, cursor, lang_code=lang_code)
 
 
 @bot.callback_query_handler(
@@ -70,21 +75,23 @@ async def handle_product_details(call):
     products_service = ProductService()
     product = await products_service.get_product_by_id(product_id)
 
+    lang_code = getattr(call, "language_code", "en")
     if product is None:
-        bot.answer_callback_query(call.id, "Product not found.")
+        bot.answer_callback_query(call.id, get_string("product_not_found", lang_code))
         return
 
-    msg = f"""Product Details:\n
-Name: {product.name}
-Description: {product.description or "No description available."}
-Price: {product.price} {product.currency}
-"""
+    msg = get_string("product_details", lang_code).format(
+        name=product.name,
+        description=product.description or get_string("no_description", lang_code),
+        price=product.price,
+        currency=product.currency,
+    )
 
     await bot.send_photo(
         call.message.chat.id,
         product.image_url,
         caption=msg,
-        reply_markup=buy_product_keyboard(product.id),
+        reply_markup=buy_product_keyboard(product.id, lang_code),
     )
 
 
@@ -93,8 +100,9 @@ Price: {product.price} {product.currency}
 )
 async def handle_buy_product(call):
     product_id_str = call.data.removeprefix(BUY_PRODUCT_CQ_PREFIX)
+    lang_code = getattr(call, "language_code", "en")
     if not product_id_str.isdigit():
-        bot.answer_callback_query(call.id, "Invalid product ID.")
+        bot.answer_callback_query(call.id, get_string("invalid_product_id", lang_code))
         return
 
     product_id = int(product_id_str)
@@ -105,7 +113,7 @@ async def handle_buy_product(call):
     username = call.from_user.username
     if username is None:
         await bot.answer_callback_query(
-            call.id, "Only users without username can place orders."
+            call.id, get_string("error_username_required", lang_code)
         )
         return
 
@@ -117,7 +125,9 @@ async def handle_buy_product(call):
     products_service = ProductService()
     product = await products_service.get_product_by_id(product_id)
     if not product:
-        await bot.answer_callback_query(call.id, "Product not found.")
+        await bot.answer_callback_query(
+            call.id, get_string("product_not_found", lang_code)
+        )
         return
 
     order = await orders_service.create_order(product_id, user.id)
@@ -128,19 +138,24 @@ async def handle_buy_product(call):
         session_id, payment_url = await payment_service.create_checkout_session(
             order.id, product.name, product.price, product.currency
         )
-        await orders_service.update_order_payment_info(order.id, session_id, payment_url)
+        await orders_service.update_order_payment_info(
+            order.id, session_id, payment_url
+        )
 
-        msg = f"""Order Created Successfully! 🎉\n
-Order ID: {order.id}
-Status: {order.status}
-Price: {product.price} {product.currency}
-
-Please complete the payment using the button below. 👇
-"""
+        msg = get_string("order_created", lang_code).format(
+            order_id=order.id,
+            status=order.status,
+            price=product.price,
+            currency=product.currency,
+        )
         await bot.send_message(
-            call.message.chat.id, msg, reply_markup=payment_keyboard(payment_url, order.id)
+            call.message.chat.id,
+            msg,
+            reply_markup=payment_keyboard(payment_url, order.id, lang_code),
         )
 
     except Exception as e:
-        await bot.send_message(call.message.chat.id, f"Error creating payment: {e}")
+        await bot.send_message(
+            call.message.chat.id, get_string("error_payment", lang_code).format(error=e)
+        )
         # Optionally cancel order or log error

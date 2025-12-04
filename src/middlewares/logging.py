@@ -1,5 +1,6 @@
 import logging
-from telebot.asyncio_handler_backends import BaseMiddleware, CancelUpdate
+
+from telebot.asyncio_handler_backends import BaseMiddleware
 from telebot.types import CallbackQuery
 
 logger = logging.getLogger(__name__)

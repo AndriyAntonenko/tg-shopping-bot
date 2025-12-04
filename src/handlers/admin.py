@@ -4,27 +4,26 @@ from ..constants import (
     ADMIN_CMD,
     APPROVE_ORDER_CQ_PREFIX,
     CANCEL_ORDER_CQ_PREFIX,
+    CANCEL_REMOVE_PRODUCT_PREFIX,
+    CONFIRM_REMOVE_PRODUCT_PREFIX,
+    REMOVE_PRODUCT_CMD,
+    REMOVE_PRODUCT_CURSOR_PREFIX,
+    REMOVE_PRODUCT_PREFIX,
     VIEW_ALL_ORDERS_CMD,
+    VIEW_FEEDBACK_DETAILS_CQ_PREFIX,
+    VIEW_FEEDBACKS_CQ_PREFIX,
     VIEW_ORDER_DETAILS_CQ_PREFIX,
     VIEW_PENDING_ORDERS_CQ,
-    REMOVE_PRODUCT_PREFIX,
-    REMOVE_PRODUCT_CMD,
-    CONFIRM_REMOVE_PRODUCT_PREFIX,
-    CANCEL_REMOVE_PRODUCT_PREFIX,
-    REMOVE_PRODUCT_CURSOR_PREFIX,
-    VIEW_FEEDBACKS_CQ_PREFIX,
-    VIEW_FEEDBACK_DETAILS_CQ_PREFIX,
 )
 from ..guards.admin import admin_guard
 from ..keyboards.inline import (
     admin_keyboard,
     admin_order_commands_keyboard,
-    pending_orders_keyboard,
-    admin_remove_products_keyboard,
     admin_remove_products_keyboard,
     confirm_remove_product_keyboard,
-    feedbacks_list_keyboard,
     feedback_details_keyboard,
+    feedbacks_list_keyboard,
+    pending_orders_keyboard,
 )
 from ..loader import bot
 from ..services.feedback import FeedbackService
@@ -199,7 +198,9 @@ async def show_products_to_remove(chat_id, cursor):
     await bot.send_message(chat_id, "Select a product to remove:", reply_markup=markup)
 
 
-@bot.callback_query_handler(func=lambda call: call.data.startswith(REMOVE_PRODUCT_CURSOR_PREFIX))
+@bot.callback_query_handler(
+    func=lambda call: call.data.startswith(REMOVE_PRODUCT_CURSOR_PREFIX)
+)
 async def handle_remove_pagination(call):
     cursor = call.data.removeprefix(REMOVE_PRODUCT_CURSOR_PREFIX)
     cursor = int(cursor) if cursor.isdigit() else 0
@@ -210,7 +211,9 @@ async def handle_remove_pagination(call):
     await show_products_to_remove(call.message.chat.id, cursor)
 
 
-@bot.callback_query_handler(func=lambda call: call.data.startswith(REMOVE_PRODUCT_PREFIX))
+@bot.callback_query_handler(
+    func=lambda call: call.data.startswith(REMOVE_PRODUCT_PREFIX)
+)
 async def handle_product_selection(call):
     product_id = int(call.data.removeprefix(REMOVE_PRODUCT_PREFIX))
     if product_id == 0:
@@ -234,22 +237,29 @@ async def handle_product_selection(call):
 
     if product.image_url:
         await bot.send_photo(
-            call.message.chat.id, product.image_url, caption=caption, reply_markup=markup
+            call.message.chat.id,
+            product.image_url,
+            caption=caption,
+            reply_markup=markup,
         )
     else:
         await bot.send_message(call.message.chat.id, caption, reply_markup=markup)
-    
+
     await bot.delete_message(call.message.chat.id, call.message.message_id)
 
 
-@bot.callback_query_handler(func=lambda call: call.data.startswith(CANCEL_REMOVE_PRODUCT_PREFIX))
+@bot.callback_query_handler(
+    func=lambda call: call.data.startswith(CANCEL_REMOVE_PRODUCT_PREFIX)
+)
 async def handle_cancel_remove(call):
     await bot.delete_message(call.message.chat.id, call.message.message_id)
     await bot.send_message(call.message.chat.id, "Removal canceled.")
     await show_products_to_remove(call.message.chat.id, 0)
 
 
-@bot.callback_query_handler(func=lambda call: call.data.startswith(CONFIRM_REMOVE_PRODUCT_PREFIX))
+@bot.callback_query_handler(
+    func=lambda call: call.data.startswith(CONFIRM_REMOVE_PRODUCT_PREFIX)
+)
 async def handle_confirm_remove(call):
     product_id = int(call.data.removeprefix(CONFIRM_REMOVE_PRODUCT_PREFIX))
     product_service = ProductService()
@@ -262,16 +272,16 @@ async def handle_confirm_remove(call):
 
     # Delete image if exists
     if product.image_url:
-        # Extract file name from URL or store it differently? 
+        # Extract file name from URL or store it differently?
         # The URL is https://{bucket}.{region}.cdn.digitaloceanspaces.com/{bucket}/{file_name}
         # We need just the file_name (key).
         # Based on storage.py: url = f"https://{self.bucket}.{self.region}.cdn.digitaloceanspaces.com/{self.bucket}/{file_name}"
-        # So we can split by / and take the last part? 
+        # So we can split by / and take the last part?
         # Wait, the URL construction in storage.py is:
         # url = f"https://{self.bucket}.{self.region}.cdn.digitaloceanspaces.com/{self.bucket}/{file_name}"
         # So yes, the last part is the file name.
         # However, let's be safer.
-        
+
         try:
             file_name = product.image_url.split("/")[-1]
             # Also need to handle if there are folders in the key like "products/uuid.ext"
@@ -285,10 +295,11 @@ async def handle_confirm_remove(call):
             # url = .../{self.bucket}/{file_name}
             # So if file_name is "products/foo.jpg", url ends with /bucket/products/foo.jpg
             # So we need to extract everything after /bucket/
-            
+
             # A safer way might be to store the key in the DB, but we don't have that column.
             # We have to parse the URL.
             from src.config import settings
+
             bucket_part = f"/{settings.do_bucket}/"
             if bucket_part in product.image_url:
                 file_name = product.image_url.split(bucket_part)[-1]
@@ -309,38 +320,40 @@ async def handle_confirm_remove(call):
     await show_products_to_remove(call.message.chat.id, 0)
 
 
-@bot.callback_query_handler(func=lambda call: call.data.startswith(VIEW_FEEDBACKS_CQ_PREFIX))
+@bot.callback_query_handler(
+    func=lambda call: call.data.startswith(VIEW_FEEDBACKS_CQ_PREFIX)
+)
 @admin_guard
 async def handle_view_feedbacks(call):
     page_str = call.data.removeprefix(VIEW_FEEDBACKS_CQ_PREFIX)
     page = int(page_str) if page_str.isdigit() else 0
     limit = 5
     offset = page * limit
-    
+
     feedback_service = FeedbackService()
     total_count = await feedback_service.get_feedbacks_count()
     feedbacks = await feedback_service.get_feedbacks_list(limit, offset)
-    
+
     total_pages = (total_count + limit - 1) // limit
     if total_pages == 0:
         total_pages = 1
-    
+
     if not feedbacks and page > 0:
         await bot.answer_callback_query(call.id, "No more feedbacks.")
         return
 
     msg = f"Feedbacks (Page {page + 1}/{total_pages}):"
-    
+
     # If it's a new message (e.g. from main menu), we send a new message.
     # But here we are handling callback query, so we edit.
     # Wait, the button in admin menu sends a callback query too.
-    
+
     try:
         await bot.edit_message_text(
             chat_id=call.message.chat.id,
             message_id=call.message.message_id,
             text=msg,
-            reply_markup=feedbacks_list_keyboard(feedbacks, page, total_pages)
+            reply_markup=feedbacks_list_keyboard(feedbacks, page, total_pages),
         )
     except Exception as e:
         # If content is same, it might raise error, but here we are changing content likely.
@@ -350,32 +363,38 @@ async def handle_view_feedbacks(call):
         await bot.send_message(
             call.message.chat.id,
             msg,
-            reply_markup=feedbacks_list_keyboard(feedbacks, page, total_pages)
+            reply_markup=feedbacks_list_keyboard(feedbacks, page, total_pages),
         )
 
 
-@bot.callback_query_handler(func=lambda call: call.data.startswith(VIEW_FEEDBACK_DETAILS_CQ_PREFIX))
+@bot.callback_query_handler(
+    func=lambda call: call.data.startswith(VIEW_FEEDBACK_DETAILS_CQ_PREFIX)
+)
 @admin_guard
 async def handle_feedback_details(call):
     feedback_id = int(call.data.removeprefix(VIEW_FEEDBACK_DETAILS_CQ_PREFIX))
     feedback_service = FeedbackService()
     feedback = await feedback_service.get_feedback_by_id(feedback_id)
-    
+
     if not feedback:
         await bot.answer_callback_query(call.id, "Feedback not found.")
         return
-        
-    username = f"@{feedback.user_telegram_username}" if feedback.user_telegram_username else f"ID: {feedback.user_id}"
+
+    username = (
+        f"@{feedback.user_telegram_username}"
+        if feedback.user_telegram_username
+        else f"ID: {feedback.user_id}"
+    )
     msg = (
         f"Feedback Details:\n\n"
         f"From: {username}\n"
         f"Date: {feedback.created_at}\n\n"
         f"{feedback.feedback}"
     )
-    
+
     await bot.edit_message_text(
         chat_id=call.message.chat.id,
         message_id=call.message.message_id,
         text=msg,
-        reply_markup=feedback_details_keyboard(0)
+        reply_markup=feedback_details_keyboard(0),
     )
