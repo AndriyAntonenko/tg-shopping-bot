@@ -7,6 +7,7 @@ from telebot.asyncio_handler_backends import State, StatesGroup
 from src.constants import ADD_PRODUCT_CMD, DEFAULT_CURRENCY
 from src.guards.admin import admin_guard
 from src.loader import bot
+from src.resources.strings import get_string
 from src.services.products import ProductService
 from src.services.storage import StorageService
 
@@ -28,12 +29,14 @@ class AddProductState(StatesGroup):
 @admin_guard
 async def cmd_add_product(message):
     await bot.set_state(message.from_user.id, AddProductState.name, message.chat.id)
-    await bot.send_message(message.chat.id, "Please enter the product name:")
+    lang_code = getattr(message, "language_code", "en")
+    await bot.send_message(message.chat.id, get_string("enter_product_name", lang_code))
 
 
 @bot.message_handler(state=AddProductState.name)
 async def handle_product_name(message):
     name_raw = message.text.strip()
+    lang_code = getattr(message, "language_code", "en")
     try:
         name = name_validator.validate_python(name_raw)
         async with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
@@ -42,12 +45,12 @@ async def handle_product_name(message):
         await bot.set_state(
             message.from_user.id, AddProductState.description, message.chat.id
         )
-        msg = "Great! Now, please enter the product description for {}:".format(name)
+        msg = get_string("enter_product_description", lang_code).format(name=name)
         await bot.send_message(message.chat.id, msg)
     except ValidationError:
         await bot.send_message(
             message.chat.id,
-            "Invalid product name. Please enter a name between 2 and 32 characters:",
+            get_string("invalid_product_name", lang_code),
         )
         return
 
@@ -55,6 +58,7 @@ async def handle_product_name(message):
 @bot.message_handler(state=AddProductState.description)
 async def handle_product_description(message):
     description_raw = message.text.strip()
+    lang_code = getattr(message, "language_code", "en")
     try:
         description = description_validator.validate_python(description_raw)
         async with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
@@ -64,12 +68,12 @@ async def handle_product_description(message):
         )
         await bot.send_message(
             message.chat.id,
-            "Great! Now, please enter the product price (a positive number):",
+            get_string("enter_product_price", lang_code),
         )
     except ValidationError:
         await bot.send_message(
             message.chat.id,
-            "Invalid description. Please enter a description between 10 and 256 characters:",
+            get_string("invalid_product_description", lang_code),
         )
         return
 
@@ -77,6 +81,7 @@ async def handle_product_description(message):
 @bot.message_handler(state=AddProductState.price)
 async def handle_product_price(message):
     price_raw = message.text.strip()
+    lang_code = getattr(message, "language_code", "en")
     try:
         price = price_validator.validate_python(price_raw)
         async with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
@@ -85,21 +90,22 @@ async def handle_product_price(message):
             message.from_user.id, AddProductState.image_url, message.chat.id
         )
         await bot.send_message(
-            message.chat.id, "Almost done! Now, please add the product image:"
+            message.chat.id, get_string("enter_product_image", lang_code)
         )
     except ValidationError:
         await bot.send_message(
             message.chat.id,
-            "Invalid price. Please enter a positive number for the price:",
+            get_string("invalid_product_price", lang_code),
         )
         return
 
 
 @bot.message_handler(state=AddProductState.image_url, content_types=["photo"])
 async def handle_product_image(message):
+    lang_code = getattr(message, "language_code", "en")
     if not message.photo:
         await bot.send_message(
-            message.chat.id, "Please send a valid photo for the product image:"
+            message.chat.id, get_string("invalid_product_image", lang_code)
         )
         return
 
@@ -119,7 +125,7 @@ async def handle_product_image(message):
 
         if not image_url:
             await bot.send_message(
-                message.chat.id, "Failed to upload image. Please try again."
+                message.chat.id, get_string("error_upload_image", lang_code)
             )
             return
 
@@ -134,15 +140,15 @@ async def handle_product_image(message):
                 currency=DEFAULT_CURRENCY,
             )
 
-            caption = f"""Product successfully added:\n
-Name: {data["name"]}
-Description: {data["description"]}
-Price: {data["price"]}
-"""
+            caption = get_string("product_added", lang_code).format(
+                name=data["name"],
+                description=data["description"],
+                price=data["price"],
+            )
             await bot.delete_state(message.from_user.id, message.chat.id)
             await bot.send_photo(message.chat.id, image_url, caption=caption)
     except Exception as e:
         print(f"Error in handle_product_image: {e}")
         await bot.send_message(
-            message.chat.id, "An error occurred while processing the image."
+            message.chat.id, get_string("error_processing_image", lang_code)
         )
