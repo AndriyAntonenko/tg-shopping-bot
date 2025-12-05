@@ -35,13 +35,14 @@ from ..services.storage import StorageService
 @bot.message_handler(commands=[ADMIN_CMD])
 @admin_guard
 async def cmd_admin(message: Message):
+    lang_code = getattr(message, "language_code", "en")
     await bot.send_message(
         message.chat.id,
         """Hello @{username}!
 Welcome to the admin panel. Use the buttons below to manage pending orders.""".format(
             username=message.from_user.username
         ),
-        reply_markup=admin_keyboard(),
+        reply_markup=admin_keyboard(lang_code),
     )
 
 
@@ -64,10 +65,11 @@ async def cmd_view_all_orders(message: Message):
     msg = "You have {count} pending orders.\n\nClick the button below to check order details".format(
         count=pending_orders_count
     )
+    lang_code = getattr(message, "language_code", "en")
     await bot.send_message(
         message.chat.id,
         msg,
-        reply_markup=pending_orders_keyboard(pending_orders),
+        reply_markup=pending_orders_keyboard(pending_orders, lang_code),
     )
 
 
@@ -90,8 +92,11 @@ async def handle_view_pending_orders(call):
     msg = "You have {count} pending orders.\n\nClick the button below to check order details".format(
         count=pending_orders_count
     )
+    lang_code = getattr(call, "language_code", "en")
     await bot.send_message(
-        call.message.chat.id, msg, reply_markup=pending_orders_keyboard(pending_orders)
+        call.message.chat.id,
+        msg,
+        reply_markup=pending_orders_keyboard(pending_orders, lang_code),
     )
 
 
@@ -120,8 +125,11 @@ Ordered by: @{order.user_telegram_username} (User ID: {order.user_telegram_user_
 Status: {order.status.name}
 Created At: {order.created_at}"""
 
+    lang_code = getattr(call, "language_code", "en")
     await bot.send_message(
-        call.message.chat.id, msg, reply_markup=admin_order_commands_keyboard(order.id)
+        call.message.chat.id,
+        msg,
+        reply_markup=admin_order_commands_keyboard(order.id, lang_code),
     )
 
 
@@ -145,10 +153,11 @@ async def handle_approve_order(call):
         return
 
     await bot.answer_callback_query(call.id, f"Order #{order_id} has been approved.")
+    lang_code = getattr(call, "language_code", "en")
     await bot.send_message(
         call.message.chat.id,
         f"Order #{order_id} has been marked as completed.",
-        reply_markup=admin_keyboard(),
+        reply_markup=admin_keyboard(lang_code),
     )
 
 
@@ -172,20 +181,22 @@ async def handle_cancel_order(call):
         return
 
     await bot.answer_callback_query(call.id, f"Order #{order_id} has been canceled.")
+    lang_code = getattr(call, "language_code", "en")
     await bot.send_message(
         call.message.chat.id,
         f"Order #{order_id} has been marked as canceled.",
-        reply_markup=admin_keyboard(),
+        reply_markup=admin_keyboard(lang_code),
     )
 
 
 @bot.message_handler(commands=[REMOVE_PRODUCT_CMD])
 @admin_guard
 async def cmd_remove_product(message):
-    await show_products_to_remove(message.chat.id, 0)
+    lang_code = getattr(message, "language_code", "en")
+    await show_products_to_remove(message.chat.id, 0, lang_code)
 
 
-async def show_products_to_remove(chat_id, cursor):
+async def show_products_to_remove(chat_id, cursor, lang_code: str = "en"):
     product_service = ProductService()
     params = GetProductsListParams(limit=6, cursor=cursor, sort_desc=True)
     products, next_cursor = await product_service.get_products_list(params)
@@ -194,7 +205,7 @@ async def show_products_to_remove(chat_id, cursor):
         await bot.send_message(chat_id, "No products available to remove.")
         return
 
-    markup = admin_remove_products_keyboard(products, next_cursor)
+    markup = admin_remove_products_keyboard(products, next_cursor, lang_code)
     await bot.send_message(chat_id, "Select a product to remove:", reply_markup=markup)
 
 
@@ -207,8 +218,9 @@ async def handle_remove_pagination(call):
     if cursor == 0:
         await bot.answer_callback_query(call.id, "Invalid cursor.")
         return
+    lang_code = getattr(call, "language_code", "en")
     await bot.delete_message(call.message.chat.id, call.message.message_id)
-    await show_products_to_remove(call.message.chat.id, cursor)
+    await show_products_to_remove(call.message.chat.id, cursor, lang_code)
 
 
 @bot.callback_query_handler(
@@ -233,7 +245,8 @@ async def handle_product_selection(call):
         f"Price: {product.price} {product.currency}"
     )
 
-    markup = confirm_remove_product_keyboard(product_id)
+    lang_code = getattr(call, "language_code", "en")
+    markup = confirm_remove_product_keyboard(product_id, lang_code)
 
     if product.image_url:
         await bot.send_photo(
@@ -254,7 +267,8 @@ async def handle_product_selection(call):
 async def handle_cancel_remove(call):
     await bot.delete_message(call.message.chat.id, call.message.message_id)
     await bot.send_message(call.message.chat.id, "Removal canceled.")
-    await show_products_to_remove(call.message.chat.id, 0)
+    lang_code = getattr(call, "language_code", "en")
+    await show_products_to_remove(call.message.chat.id, 0, lang_code)
 
 
 @bot.callback_query_handler(
@@ -317,7 +331,8 @@ async def handle_confirm_remove(call):
         f"Product Name: {product.name}\n"
     )
     await bot.send_message(call.message.chat.id, msg)
-    await show_products_to_remove(call.message.chat.id, 0)
+    lang_code = getattr(call, "language_code", "en")
+    await show_products_to_remove(call.message.chat.id, 0, lang_code)
 
 
 @bot.callback_query_handler(
@@ -348,12 +363,13 @@ async def handle_view_feedbacks(call):
     # But here we are handling callback query, so we edit.
     # Wait, the button in admin menu sends a callback query too.
 
+    lang_code = getattr(call, "language_code", "en")
     try:
         await bot.edit_message_text(
             chat_id=call.message.chat.id,
             message_id=call.message.message_id,
             text=msg,
-            reply_markup=feedbacks_list_keyboard(feedbacks, page, total_pages),
+            reply_markup=feedbacks_list_keyboard(feedbacks, page, total_pages, lang_code),
         )
     except Exception as e:
         # If content is same, it might raise error, but here we are changing content likely.
@@ -363,7 +379,7 @@ async def handle_view_feedbacks(call):
         await bot.send_message(
             call.message.chat.id,
             msg,
-            reply_markup=feedbacks_list_keyboard(feedbacks, page, total_pages),
+            reply_markup=feedbacks_list_keyboard(feedbacks, page, total_pages, lang_code),
         )
 
 
@@ -392,9 +408,10 @@ async def handle_feedback_details(call):
         f"{feedback.feedback}"
     )
 
+    lang_code = getattr(call, "language_code", "en")
     await bot.edit_message_text(
         chat_id=call.message.chat.id,
         message_id=call.message.message_id,
         text=msg,
-        reply_markup=feedback_details_keyboard(0),
+        reply_markup=feedback_details_keyboard(0, lang_code),
     )

@@ -1,10 +1,14 @@
 from telebot.types import KeyboardButton, ReplyKeyboardMarkup
 
-from ..constants import BROWSE_CATALOG_MESSAGE, FEEDBACK_MESSAGE, HELP_MESSAGE
+from ..resources.strings import get_string
 
 
-def main_menu():
+def main_menu(lang_code: str = "en"):
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    kb.add(KeyboardButton(BROWSE_CATALOG_MESSAGE), KeyboardButton(FEEDBACK_MESSAGE))
-    kb.add(KeyboardButton(HELP_MESSAGE))
+    kb.add(
+        KeyboardButton(get_string("browse_catalog", lang_code)),
+        KeyboardButton(get_string("feedback", lang_code)),
+    )
+    kb.add(KeyboardButton(get_string("help", lang_code)))
+    kb.add(KeyboardButton(get_string("language_btn", lang_code)))
     return kb

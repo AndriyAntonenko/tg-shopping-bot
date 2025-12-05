@@ -1,9 +1,10 @@
+from . import forms
 from . import (
+    start,
     admin,
     catalog,
     common,
-    fallback,
     language,
     payments,
-    start,
+    fallback,
 )

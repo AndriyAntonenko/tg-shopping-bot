@@ -16,13 +16,14 @@ from ..constants import (
     VIEW_ORDER_DETAILS_CQ_PREFIX,
     VIEW_PENDING_ORDERS_CQ,
 )
+from ..resources.strings import get_string
 from ..services.feedback import Feedback
 from ..services.orders import OrderItemDetailed, OrderStatus
 from ..services.products import ProductItem
 
 
 def catalog_keyboard(
-    products: list[ProductItem], cursor_id: int | None = None
+    products: list[ProductItem], cursor_id: int | None = None, lang_code: str = "en"
 ) -> InlineKeyboardMarkup:
     kb = InlineKeyboardMarkup(row_width=2)
     kb.add(
@@ -37,38 +38,44 @@ def catalog_keyboard(
     if cursor_id is not None:
         kb.add(
             InlineKeyboardButton(
-                text="Next ▶️", callback_data=f"{NEXT_CATALOG_CQ_PREFIX}{cursor_id}"
+                text=get_string("btn_next", lang_code),
+                callback_data=f"{NEXT_CATALOG_CQ_PREFIX}{cursor_id}",
             )
         )
     return kb
 
 
-def buy_product_keyboard(product_id: int) -> InlineKeyboardMarkup:
+def buy_product_keyboard(product_id: int, lang_code: str = "en") -> InlineKeyboardMarkup:
     kb = InlineKeyboardMarkup()
     kb.add(
         InlineKeyboardButton(
-            text="Buy 🛒", callback_data=f"{BUY_PRODUCT_CQ_PREFIX}{product_id}"
+            text=get_string("btn_buy", lang_code),
+            callback_data=f"{BUY_PRODUCT_CQ_PREFIX}{product_id}",
         )
     )
     return kb
 
 
-def admin_keyboard() -> InlineKeyboardMarkup:
+def admin_keyboard(lang_code: str = "en") -> InlineKeyboardMarkup:
     kb = InlineKeyboardMarkup()
     kb.add(
         InlineKeyboardButton(
-            text="View Pending Orders", callback_data=VIEW_PENDING_ORDERS_CQ
+            text=get_string("view_pending_orders", lang_code),
+            callback_data=VIEW_PENDING_ORDERS_CQ,
         )
     )
     kb.add(
         InlineKeyboardButton(
-            text="Feedbacks", callback_data=f"{VIEW_FEEDBACKS_CQ_PREFIX}0"
+            text=get_string("admin_feedbacks", lang_code),
+            callback_data=f"{VIEW_FEEDBACKS_CQ_PREFIX}0",
         )
     )
     return kb
 
 
-def pending_orders_keyboard(orders: list[OrderItemDetailed]) -> InlineKeyboardMarkup:
+def pending_orders_keyboard(
+    orders: list[OrderItemDetailed], lang_code: str = "en"
+) -> InlineKeyboardMarkup:
     kb = InlineKeyboardMarkup(row_width=1)
     for order in orders:
         paid_data = "PAID ✅" if order.status == OrderStatus.PAID else "UNPAID ❌"
@@ -81,21 +88,25 @@ def pending_orders_keyboard(orders: list[OrderItemDetailed]) -> InlineKeyboardMa
     return kb
 
 
-def admin_order_commands_keyboard(order_id: int) -> InlineKeyboardMarkup:
+def admin_order_commands_keyboard(
+    order_id: int, lang_code: str = "en"
+) -> InlineKeyboardMarkup:
     kb = InlineKeyboardMarkup(row_width=2)
     kb.add(
         InlineKeyboardButton(
-            text="Approve ✅", callback_data=f"{APPROVE_ORDER_CQ_PREFIX}{order_id}"
+            text=get_string("btn_approve", lang_code),
+            callback_data=f"{APPROVE_ORDER_CQ_PREFIX}{order_id}",
         ),
         InlineKeyboardButton(
-            text="Cancel ❌", callback_data=f"{CANCEL_ORDER_CQ_PREFIX}{order_id}"
+            text=get_string("btn_cancel", lang_code),
+            callback_data=f"{CANCEL_ORDER_CQ_PREFIX}{order_id}",
         ),
     )
     return kb
 
 
 def admin_remove_products_keyboard(
-    products: list[ProductItem], next_cursor: int | None = None
+    products: list[ProductItem], next_cursor: int | None = None, lang_code: str = "en"
 ) -> InlineKeyboardMarkup:
     markup = InlineKeyboardMarkup(row_width=2)
     markup.add(
@@ -111,33 +122,43 @@ def admin_remove_products_keyboard(
     if next_cursor:
         markup.add(
             InlineKeyboardButton(
-                text="Next Page >>",
+                text=get_string("btn_next", lang_code),
                 callback_data=f"{REMOVE_PRODUCT_CURSOR_PREFIX}{next_cursor}",
             )
         )
     return markup
 
 
-def confirm_remove_product_keyboard(product_id: int) -> InlineKeyboardMarkup:
+def confirm_remove_product_keyboard(
+    product_id: int, lang_code: str = "en"
+) -> InlineKeyboardMarkup:
     markup = InlineKeyboardMarkup()
     markup.add(
         InlineKeyboardButton(
-            text="Yes, Remove",
+            text=get_string("btn_yes_remove", lang_code),
             callback_data=f"{CONFIRM_REMOVE_PRODUCT_PREFIX}{product_id}",
         ),
         InlineKeyboardButton(
-            text="No, Cancel", callback_data=f"{CANCEL_REMOVE_PRODUCT_PREFIX}"
+            text=get_string("btn_no_cancel", lang_code),
+            callback_data=f"{CANCEL_REMOVE_PRODUCT_PREFIX}",
         ),
     )
     return markup
 
 
-def payment_keyboard(payment_url: str, order_id: int) -> InlineKeyboardMarkup:
+def payment_keyboard(
+    payment_url: str, order_id: int, lang_code: str = "en"
+) -> InlineKeyboardMarkup:
     kb = InlineKeyboardMarkup()
-    kb.add(InlineKeyboardButton(text="Pay Now 💳", url=payment_url))
     kb.add(
         InlineKeyboardButton(
-            text="I have paid ✅", callback_data=f"{CHECK_PAYMENT_CQ_PREFIX}{order_id}"
+            text=get_string("btn_pay_now", lang_code), url=payment_url
+        )
+    )
+    kb.add(
+        InlineKeyboardButton(
+            text=get_string("btn_i_have_paid", lang_code),
+            callback_data=f"{CHECK_PAYMENT_CQ_PREFIX}{order_id}",
         )
     )
     return kb
@@ -145,7 +166,7 @@ def payment_keyboard(payment_url: str, order_id: int) -> InlineKeyboardMarkup:
 
 
 def feedbacks_list_keyboard(
-    feedbacks: list[Feedback], page: int, total_pages: int
+    feedbacks: list[Feedback], page: int, total_pages: int, lang_code: str = "en"
 ) -> InlineKeyboardMarkup:
     kb = InlineKeyboardMarkup(row_width=1)
     for feedback in feedbacks:
@@ -166,13 +187,15 @@ def feedbacks_list_keyboard(
     if page > 0:
         nav_buttons.append(
             InlineKeyboardButton(
-                text="⬅️ Prev", callback_data=f"{VIEW_FEEDBACKS_CQ_PREFIX}{page - 1}"
+                text=get_string("btn_prev", lang_code),
+                callback_data=f"{VIEW_FEEDBACKS_CQ_PREFIX}{page - 1}",
             )
         )
     if page < total_pages - 1:
         nav_buttons.append(
             InlineKeyboardButton(
-                text="Next ➡️", callback_data=f"{VIEW_FEEDBACKS_CQ_PREFIX}{page + 1}"
+                text=get_string("btn_next", lang_code),
+                callback_data=f"{VIEW_FEEDBACKS_CQ_PREFIX}{page + 1}",
             )
         )
     if nav_buttons:
@@ -181,11 +204,14 @@ def feedbacks_list_keyboard(
     return kb
 
 
-def feedback_details_keyboard(back_page: int) -> InlineKeyboardMarkup:
+def feedback_details_keyboard(
+    back_page: int, lang_code: str = "en"
+) -> InlineKeyboardMarkup:
     kb = InlineKeyboardMarkup()
     kb.add(
         InlineKeyboardButton(
-            text="Back to List", callback_data=f"{VIEW_FEEDBACKS_CQ_PREFIX}{back_page}"
+            text=get_string("btn_back_to_list", lang_code),
+            callback_data=f"{VIEW_FEEDBACKS_CQ_PREFIX}{back_page}",
         )
     )
     return kb

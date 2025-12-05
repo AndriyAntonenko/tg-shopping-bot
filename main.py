@@ -20,6 +20,7 @@ from src.db.migrations import apply_migrations
 from src.loader import bot
 from src.middlewares import LanguageMiddleware, LoggingMiddleware
 from src.utils.logging import setup_logging
+import src.handlers  # noqa: F401
 
 if sys.version_info < (3, 12):
     current_version = ".".join(map(str, sys.version_info[:3]))

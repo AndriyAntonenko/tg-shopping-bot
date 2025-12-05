@@ -31,6 +31,13 @@ STRINGS = {
         "payment_received": "Payment received for Order #{order_id}! Thank you! 🎉\nWe will process it shortly.",
         "payment_status": "Payment status: {status}. Please complete payment.",
         "error_check_payment": "Error checking payment status.",
+        "view_pending_orders": "View Pending Orders",
+        "btn_approve": "Approve ✅",
+        "btn_cancel": "Cancel ❌",
+        "btn_yes_remove": "Yes, Remove",
+        "btn_no_cancel": "No, Cancel",
+        "btn_prev": "⬅️ Prev",
+        "btn_back_to_list": "Back to List",
     },
     "uk": {
         "browse_catalog": "Переглянути каталог",
@@ -64,6 +71,13 @@ STRINGS = {
         "payment_received": "Оплату отримано для Замовлення #{order_id}! Дякуємо! 🎉\nМи скоро його обробимо.",
         "payment_status": "Статус оплати: {status}. Будь ласка, завершіть оплату.",
         "error_check_payment": "Помилка перевірки статусу оплати.",
+        "view_pending_orders": "Переглянути очікуючі замовлення",
+        "btn_approve": "Підтвердити ✅",
+        "btn_cancel": "Скасувати ❌",
+        "btn_yes_remove": "Так, видалити",
+        "btn_no_cancel": "Ні, скасувати",
+        "btn_prev": "⬅️ Назад",
+        "btn_back_to_list": "Назад до списку",
     },
 }
 
