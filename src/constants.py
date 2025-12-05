@@ -14,6 +14,8 @@ CONFIRM_REMOVE_PRODUCT_PREFIX = "confirm_remove_product_"
 CANCEL_REMOVE_PRODUCT_PREFIX = "cancel_remove_product_"
 REMOVE_PRODUCT_CURSOR_PREFIX = "remove_product_cursor"
 
+CANCEL_ADD_PRODUCT_PREFIX = "cancel_add_product"
+
 VIEW_FEEDBACKS_CQ_PREFIX = "view_feedbacks_"
 VIEW_FEEDBACK_DETAILS_CQ_PREFIX = "view_feedback_"
 

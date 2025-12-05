@@ -15,6 +15,7 @@ from ..constants import (
     VIEW_FEEDBACKS_CQ_PREFIX,
     VIEW_ORDER_DETAILS_CQ_PREFIX,
     VIEW_PENDING_ORDERS_CQ,
+    CANCEL_ADD_PRODUCT_PREFIX,
 )
 from ..resources.strings import get_string
 from ..services.feedback import Feedback
@@ -212,6 +213,17 @@ def feedback_details_keyboard(
         InlineKeyboardButton(
             text=get_string("btn_back_to_list", lang_code),
             callback_data=f"{VIEW_FEEDBACKS_CQ_PREFIX}{back_page}",
+        )
+    )
+    return kb
+
+
+def cancel_add_product_keyboard(lang_code: str = "en") -> InlineKeyboardMarkup:
+    kb = InlineKeyboardMarkup()
+    kb.add(
+        InlineKeyboardButton(
+            text=get_string("btn_cancel_add_product", lang_code),
+            callback_data=CANCEL_ADD_PRODUCT_PREFIX,
         )
     )
     return kb

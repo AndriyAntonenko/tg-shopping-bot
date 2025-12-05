@@ -10,6 +10,8 @@ from src.loader import bot
 from src.resources.strings import get_string
 from src.services.products import ProductService
 from src.services.storage import StorageService
+from src.keyboards.inline import cancel_add_product_keyboard
+from src.constants import CANCEL_ADD_PRODUCT_PREFIX
 
 name_validator = TypeAdapter(Annotated[str, Field(min_length=2, max_length=32)])
 description_validator = TypeAdapter(
@@ -30,7 +32,11 @@ class AddProductState(StatesGroup):
 async def cmd_add_product(message):
     await bot.set_state(message.from_user.id, AddProductState.name, message.chat.id)
     lang_code = getattr(message, "language_code", "en")
-    await bot.send_message(message.chat.id, get_string("enter_product_name", lang_code))
+    await bot.send_message(
+        message.chat.id,
+        get_string("enter_product_name", lang_code),
+        reply_markup=cancel_add_product_keyboard(lang_code),
+    )
 
 
 @bot.message_handler(state=AddProductState.name)
@@ -46,7 +52,9 @@ async def handle_product_name(message):
             message.from_user.id, AddProductState.description, message.chat.id
         )
         msg = get_string("enter_product_description", lang_code).format(name=name)
-        await bot.send_message(message.chat.id, msg)
+        await bot.send_message(
+            message.chat.id, msg, reply_markup=cancel_add_product_keyboard(lang_code)
+        )
     except ValidationError:
         await bot.send_message(
             message.chat.id,
@@ -69,6 +77,7 @@ async def handle_product_description(message):
         await bot.send_message(
             message.chat.id,
             get_string("enter_product_price", lang_code),
+            reply_markup=cancel_add_product_keyboard(lang_code),
         )
     except ValidationError:
         await bot.send_message(
@@ -90,7 +99,9 @@ async def handle_product_price(message):
             message.from_user.id, AddProductState.image_url, message.chat.id
         )
         await bot.send_message(
-            message.chat.id, get_string("enter_product_image", lang_code)
+            message.chat.id,
+            get_string("enter_product_image", lang_code),
+            reply_markup=cancel_add_product_keyboard(lang_code),
         )
     except ValidationError:
         await bot.send_message(
@@ -152,3 +163,18 @@ async def handle_product_image(message):
         await bot.send_message(
             message.chat.id, get_string("error_processing_image", lang_code)
         )
+
+
+@bot.callback_query_handler(
+    func=lambda call: call.data == CANCEL_ADD_PRODUCT_PREFIX, state="*"
+)
+async def handle_cancel_inline(call):
+    lang_code = getattr(call.message, "language_code", "en")
+    await bot.answer_callback_query(call.id)
+    await bot.delete_state(call.from_user.id, call.message.chat.id)
+    await bot.edit_message_text(
+        chat_id=call.message.chat.id,
+        message_id=call.message.message_id,
+        text=get_string("action_cancelled", lang_code),
+        reply_markup=None,
+    )
