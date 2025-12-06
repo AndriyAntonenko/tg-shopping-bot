@@ -10,7 +10,8 @@ class LanguageMiddleware(BaseMiddleware):
 
     async def pre_process(self, message_or_callback_query, data):
         user_id = message_or_callback_query.from_user.id
-        user = await self.users_service.get_user_if_exists(user_id)
+        username = message_or_callback_query.from_user.username
+        user = await self.users_service.get_or_create_user(user_id, username)
 
         language_code = "en"
         if user and user.language_code:

@@ -51,6 +51,7 @@ STRINGS = {
         "error_upload_image": "Failed to upload image. Please try again.",
         "product_added": "Product successfully added:\n\nName: {name}\nDescription: {description}\nPrice: {price}\n",
         "error_processing_image": "An error occurred while processing the image.",
+        "fallback_message": "I'm not sure how to help with that, but I'm learning! 🤖\n\nTry using /help to see what I can do, or check out our /catalog.",
     },
     "uk": {
         "browse_catalog": "Переглянути каталог",
@@ -104,6 +105,7 @@ STRINGS = {
         "error_upload_image": "Не вдалося завантажити зображення. Спробуйте ще раз.",
         "product_added": "Товар успішно додано:\n\nНазва: {name}\nОпис: {description}\nЦіна: {price}\n",
         "error_processing_image": "Виникла помилка під час обробки зображення.",
+        "fallback_message": "Я не впевнений, як допомогти з цим, але я вчуся! 🤖\n\nСпробуйте використати /help, щоб побачити, що я можу, або перегляньте наш /catalog.",
     },
 }
 

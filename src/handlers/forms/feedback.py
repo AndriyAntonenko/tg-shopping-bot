@@ -50,7 +50,7 @@ async def handle_feedback_message(message: Message):
     users_service = UsersService()
 
     # We need the internal user ID for the database, not the Telegram ID
-    user = await users_service.get_user_if_exists(user_id)
+    user = await users_service.get_or_create_user(user_id, username);
     if user:
         await feedback_service.create_feedback(user.id, feedback_text)
 
